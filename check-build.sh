@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Estado actual del build y pasos siguientes
+# Estado actual del build y pasos nexts
 
 BUILD_DIR="$HOME/pan-os-iso/build"
 
@@ -24,7 +24,7 @@ fi
 
 if [[ -f "$BUILD_DIR/initramfs.cpio" ]]; then
     SIZE=$(ls -lh "$BUILD_DIR/initramfs.cpio" | awk '{print $5}')
-    echo "✅ initramfs.cpio (Sistema raíz).... $SIZE"
+    echo "✅ initramfs.cpio (Sistema raiz).... $SIZE"
 else
     echo "❌ initramfs.cpio...................... NO ENCONTRADO"
 fi
@@ -44,7 +44,7 @@ else
 fi
 
 if [[ -f "$BUILD_DIR/rootfs/boot.js" ]]; then
-    echo "✅ boot.js (Script de inicio)........ PRESENTE"
+    echo "✅ boot.js (Script for inicio)........ PRESENTE"
 else
     echo "❌ boot.js............................ NO ENCONTRADO"
 fi
@@ -54,13 +54,13 @@ cat << 'EOF'
 
 ════════════════════════════════════════════════════════════════════════════
 
-PRÓXIMOS PASOS:
+PROXIMOS PASOS:
 
-1️⃣  SI VES ❌ EN MIEMBROS CRÍTICOS (vmlinuz, initramfs.cpio):
+1️⃣  SI VES ❌ EN MIEMBROS CRITICOS (vmlinuz, initramfs.cpio):
     
     $ ./build-iso-with-NodeJS.sh
     
-    El script se ejecutará nuevamente. Toma 15-30 minutos.
+    El script se ejecutara nuevamente. Toma 15-30 minutos.
 
 ════════════════════════────────────────────────────────────────────────════
 
@@ -68,8 +68,8 @@ PRÓXIMOS PASOS:
 
     $ ./run-iso.sh
     
-    Elige opción 1 para ISO o 2 para initramfs (más rápido)
-    El OS debería arrancar en QEMU
+    Elige opcion 1 para ISO o 2 para initramfs (mas rapido)
+    El OS deberia arrancar en QEMU
 
 ════════════════────────────────────────────────────════════════════════════
 
@@ -84,4 +84,4 @@ PRÓXIMOS PASOS:
 EOF
 
 echo ""
-ls -lah "$BUILD_DIR" 2>/dev/null | tail -n +4 || echo "Directorio no encontrado. Ejecuta primero: ./build-iso-with-NodeJS.sh"
+ls -lah "$BUILD_DIR" 2>/dev/null | tail -n +4 || echo "Directory not foundado. Run first: ./build-iso-with-NodeJS.sh"

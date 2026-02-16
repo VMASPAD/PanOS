@@ -22,18 +22,18 @@ echo -e "${BLUE}═════════════════════�
 echo ""
 
 # Clean
-echo -e "${YELLOW}[1/6] Limpiando build anterior...${NC}"
+echo -e "${YELLOW}[1/6] Cleaning build anterior...${NC}"
 rm -rf "${WORKSPACE}" 2>/dev/null || true
 mkdir -p "${WORKSPACE}/kernel-src" "${ROOTFS}" "${BUILD}" "${ISO_DIR}/boot/grub"
 echo -e "${GREEN}✓ Limpieza completada${NC}"
 echo ""
 
 # Download and compile kernel
-echo -e "${YELLOW}[2/6] Descargando y compilando kernel...${NC}"
+echo -e "${YELLOW}[2/6] Downloading y compilando kernel...${NC}"
 cd "${WORKSPACE}/kernel-src"
 
 if [ ! -f "linux-${KERNEL_VERSION}.tar.xz" ]; then
-    echo "  Descargando kernel..."
+    echo "  Downloading kernel..."
     wget -q "https://cdn.kernel.org/pub/linux/kernel/v6.x/linux-${KERNEL_VERSION}.tar.xz" || {
         echo -e "${RED}✗ Error descargando kernel${NC}"
         exit 1
@@ -152,7 +152,7 @@ EOF
 
 make oldconfig < /dev/null > /dev/null 2>&1
 
-echo "  Compilando kernel (esto toma tiempo)..."
+echo "  Compiling kernel (esto toma tiempo)..."
 make -j$(nproc) 2>&1 | tail -30
 
 if [ ! -f "arch/x86/boot/bzImage" ]; then
@@ -165,13 +165,13 @@ echo -e "${GREEN}✓ Kernel compilado${NC}"
 echo ""
 
 # Create rootfs
-echo -e "${YELLOW}[3/6] Creando rootfs...${NC}"
+echo -e "${YELLOW}[3/6] Creating rootfs...${NC}"
 cd "${ROOTFS}"
 
 mkdir -p bin dev etc lib lib64 proc sbin sys tmp root usr/bin usr/lib var/lib var/log boot
 
 # Download busybox
-echo "  Descargando busybox..."
+echo "  Downloading busybox..."
 mkdir -p bin
 cd bin
 wget -q "https://busybox.net/downloads/binaries/1.35.0-x86_64-linux-musl/busybox" -O busybox 2>/dev/null || \
@@ -311,7 +311,7 @@ copy_binary_with_libs() {
 }
 
 # Copy necessary glibc libraries for dynamic binaries (like NodeJS)
-echo "  Copiando librerías glibc para NodeJS..."
+echo "  Copiando librerias glibc para NodeJS..."
 if [ -f /lib/x86_64-linux-gnu/libc.so.6 ]; then
     mkdir -p "${ROOTFS}/lib64"
     # Core C libraries
@@ -366,18 +366,18 @@ if command -v git >/dev/null 2>&1; then
 
     echo -e "${GREEN}✓ Git integrado${NC}"
 else
-    echo -e "${YELLOW}⚠️  Git no encontrado en el host${NC}"
+    echo -e "${YELLOW}⚠️  Git not foundado en el host${NC}"
 fi
 echo ""
 
 # Download and integrate Node.js
-echo -e "${YELLOW}[4/6] Descargando Node.js 24...${NC}"
+echo -e "${YELLOW}[4/6] Downloading Node.js 24...${NC}"
 mkdir -p bin
 cd bin
 
-echo "  Descargando Node.js 24 x64..."
+echo "  Downloading Node.js 24 x64..."
 
-# Usar Node.js 24 (más compatible que NodeJS)
+# Usar Node.js 24 (mas compatible que NodeJS)
 NODE_VERSION="v24.0.0"
 NODE_URL="https://nodejs.org/dist/${NODE_VERSION}/node-${NODE_VERSION}-linux-x64.tar.xz"
 
@@ -434,7 +434,7 @@ cd "${ROOTFS}"
 echo ""
 
 # Create init script
-echo -e "${YELLOW}[5/6] Creando scripts...${NC}"
+echo -e "${YELLOW}[5/6] Creating scripts...${NC}"
 
 cat > init << 'INIT_EOF'
 #!/bin/sh
@@ -608,7 +608,7 @@ else
 fi
 echo ""
 
-echo "[5] Test Conectividad (TCP - Rápido)"
+echo "[5] Test Conectividad (TCP - Rapido)"
 echo "────────────────────────────────────────────────────────"
 echo "Intentando conexion TCP a github.com:443 (HTTPS)..."
 timeout 3 sh -c "echo '' > /dev/tcp/github.com/443" 2>/dev/null && {
@@ -701,7 +701,7 @@ if [ -x bin/node ]; then
 #!/usr/bin/env node
 
 // PanOS - Node.js 24 Boot Script
-// Este archivo se ejecuta con: node boot.js
+// Este file se ejecuta con: node boot.js
 
 console.log("╔════════════════════════════════════════╗");
 console.log("║   🚀 PanOS - Node.js 24              ║");
@@ -709,7 +709,7 @@ console.log("║      Linux 6.6 + Busybox + Node      ║");
 console.log("╚════════════════════════════════════════╝");
 console.log("");
 
-// Información del sistema
+// Informacion del sistema
 try {
     const memUsage = Math.round(process.memoryUsage().rss / 1024 / 1024);
     console.log("Sistema:");
@@ -719,21 +719,21 @@ try {
     console.log(`  • Uptime: ${Math.floor(process.uptime())}s`);
     console.log("");
     
-    // Ejemplo 1: Ejecutar comandos del sistema
+    // Ejemplo 1: Runr comandos del sistema
     console.log("Ejemplos de uso:");
-    console.log('  node boot.js               (ejecutar este archivo)');
+    console.log('  node boot.js               (ejecutar este file)');
     console.log('  node -e "console.log(1+1)" (evaluar JS inline)');
-    console.log('  node script.js             (ejecutar archivo JS)');
+    console.log('  node script.js             (ejecutar file JS)');
     console.log("");
     
-    // Ejemplo 2: Leer archivo
+    // Ejemplo 2: Leer file
     const fs = require("fs");
     console.log("Archivos en /:");
     const files = fs.readdirSync("/").slice(0, 10);
     files.forEach(f => console.log(`  • ${f}`));
     console.log("");
     
-    console.log("Para más comandos: node --help");
+    console.log("Para mas comandos: node --help");
 } catch (e) {
     console.error("Error:", e.message);
 }
@@ -746,7 +746,7 @@ echo -e "${GREEN}✓ Scripts creados${NC}"
 echo ""
 
 # Create initramfs
-echo -e "${YELLOW}[6/6] Creando ISO...${NC}"
+echo -e "${YELLOW}[6/6] Creating ISO...${NC}"
 
 # Create cpio
 cd "${ROOTFS}"
@@ -771,19 +771,19 @@ EOF
 
 # Try to create ISO with grub
 if command -v grub-mkrescue &> /dev/null; then
-    echo "  Creando ISO con GRUB..."
+    echo "  Creating ISO con GRUB..."
     grub-mkrescue -o "${BUILD}/pan-os.iso" "${ISO_DIR}" 2>/dev/null || {
         echo -e "${YELLOW}⚠️  No se pudo crear ISO con GRUB${NC}"
     }
 elif command -v xorrisofs &> /dev/null; then
-    echo "  Creando ISO con xorrisofs..."
+    echo "  Creating ISO con xorrisofs..."
     xorrisofs -o "${BUILD}/pan-os.iso" -b boot/grub/i386-pc/eltorito.img \
         -no-emul-boot -boot-load-size 4 -boot-info-table "${ISO_DIR}" 2>/dev/null || {
-        echo -e "${YELLOW}⚠️  Creando ISO simple...${NC}"
+        echo -e "${YELLOW}⚠️  Creating ISO simple...${NC}"
         mkisofs -o "${BUILD}/pan-os.iso" -R -b boot/vmlinuz "${ISO_DIR}" 2>/dev/null || true
     }
 else
-    echo -e "${YELLOW}⚠️  Instalando herramientas ISO...${NC}"
+    echo -e "${YELLOW}⚠️  Installing herramientas ISO...${NC}"
     sudo apt-get update > /dev/null 2>&1
     sudo apt-get install -y xorriso > /dev/null 2>&1
     xorrisofs -o "${BUILD}/pan-os.iso" "${ISO_DIR}" 2>/dev/null || true
@@ -791,9 +791,9 @@ fi
 
 # If ISO creation failed, create a bootable initramfs (fallback)
 if [ ! -f "${BUILD}/pan-os.iso" ] || [ ! -s "${BUILD}/pan-os.iso" ]; then
-    echo -e "${YELLOW}⚠️  Fallback: Creando imagen para QEMU...${NC}"
+    echo -e "${YELLOW}⚠️  Fallback: Creating imagen para QEMU...${NC}"
     # Ya tenemos vmlinuz e initramfs.cpio, eso es suficiente para QEMU
-    echo "  Uso: qemu-system-x86_64 -kernel vmlinuz -initrd initramfs.cpio"
+    echo "  Usage: qemu-system-x86_64 -kernel vmlinuz -initrd initramfs.cpio"
 fi
 
 echo -e "${GREEN}✓ ISO/Imagen creada${NC}"
@@ -830,7 +830,7 @@ if [ -x "${ROOTFS}/bin/node" ]; then
     if [ -x "${ROOTFS}/bin/npm" ]; then
         echo "  ✓ npm INTEGRADO en la imagen"
     fi
-    echo "  Ejecutar en el OS:"
+    echo "  Runr en el OS:"
     echo "    $ node --version"
     echo "    $ npm --version"
     echo "    $ node boot.js"

@@ -1,9 +1,9 @@
-# Makefile para PanOS Build
-# Uso: make [target]
+# Makefile for PanOS Build
+# Usage: make [target]
 
 .PHONY: help auto quick menu run qemu clean rebuild
 
-# Detectar script dir
+# Detect script dir
 SCRIPT_DIR := $(dir $(realpath $(lastword $(MAKEFILE_LIST))))
 
 help:
@@ -11,37 +11,37 @@ help:
 	@echo "║ PanOS - Makefile Targets        ║"
 	@echo "╚════════════════════════════════════════╝"
 	@echo ""
-	@echo "Targets disponibles:"
+	@echo "Available targets:"
 	@echo ""
-	@echo "  make auto     - Construcción automática completa"
-	@echo "  make quick    - Rápido (alias de auto)"
-	@echo "  make menu     - Menú interactivo"
-	@echo "  make qemu     - Ejecutar en QEMU"
-	@echo "  make run      - Alias de qemu"
-	@echo "  make clean    - Limpiar ~/pan-os"
-	@echo "  make rebuild  - Limpiar y reconstruir todo"
-	@echo "  make deps     - Verificar dependencias"
+	@echo "  make auto     - Complete automatic build"
+	@echo "  make quick    - Fast (alias of auto)"
+	@echo "  make menu     - Interactive menu"
+	@echo "  make qemu     - Run in QEMU"
+	@echo "  make run      - Alias of qemu"
+	@echo "  make clean    - Clean ~/pan-os"
+	@echo "  make rebuild  - Clean and rebuild everything"
+	@echo "  make deps     - Check dependencies"
 	@echo ""
 
 auto:
-	@echo "🔨 Construyendo PanOS automáticamente..."
+	@echo "🔨 Building PanOS automatically..."
 	@bash $(SCRIPT_DIR)build-PanOS-os.sh --auto
 
 quick: auto
-	@echo "✅ Build completado"
+	@echo "✅ Build completed"
 
 menu:
-	@echo "📋 Abriendo menú interactivo..."
+	@echo "📋 Opening interactive menu..."
 	@bash $(SCRIPT_DIR)build-PanOS-os.sh
 
 deps:
-	@echo "✅ Verificando dependencias..."
+	@echo "✅ Checking dependencies..."
 	@bash $(SCRIPT_DIR)build-PanOS-os.sh
-	@read -p "Presiona Enter..."
+	@read -p "Press Enter..."
 
 qemu:
 	@if [ -f ~/pan-os/build/vmlinuz ] && [ -f ~/pan-os/build/initramfs.cpio ]; then \
-		echo "🚀 Ejecutando PanOS en QEMU..."; \
+		echo "🚀 Running PanOS in QEMU..."; \
 		qemu-system-x86_64 \
 			-kernel ~/pan-os/build/vmlinuz \
 			-initrd ~/pan-os/build/initramfs.cpio \
@@ -50,17 +50,17 @@ qemu:
 			-m 512 \
 			-smp 2; \
 	else \
-		echo "❌ Imagen no encontrada. Ejecuta 'make auto' primero."; \
+		echo "❌ Image not found. Run 'make auto' first."; \
 	fi
 
 run: qemu
 
 clean:
-	@echo "🗑️  Limpiando ~/pan-os..."
+	@echo "🗑️  Cleaning ~/pan-os..."
 	@rm -rf ~/pan-os
-	@echo "✅ Limpieza completada"
+	@echo "✅ Cleanup completed"
 
 rebuild: clean auto
-	@echo "✅ Reconstrucción completada"
+	@echo "✅ Rebuild completed"
 
 .DEFAULT_GOAL := help

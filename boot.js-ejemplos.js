@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 // ================================================================
-// PanOS - boot.js EJEMPLOS AVANZADOS
+// PanOS - boot.js ADVANCED EXAMPLES
 // ================================================================
 // Reemplaza el contenido de ~/pan-os/rootfs/boot.js con uno de
 // estos ejemplos para diferentes casos de uso.
@@ -13,7 +13,7 @@
 console.log("🚀 PanOS iniciado!");
 console.log(`Memoria: ${Math.round(process.memoryUsage().rss / 1024 / 1024)} MB`);
 
-// Nota: Ejemplos originales de Bun removidos. A continuación un ejemplo
+// Nota: Ejemplos originales de Bun removidos. A continuacion un ejemplo
 // equivalente usando Node.js nativo (http).
 // EJEMPLO: servidor HTTP simple con Node.js
 const http = require("http");
@@ -31,7 +31,7 @@ server.listen(8080, () => {
 // EJEMPLO 2: Web Framework Completo (React + SSR)
 // ================================================================
 /*
-  Ejemplo React/SSR removido (Bun específico). Si quieres ejecutar
+  Ejemplo React/SSR removido (Bun especifico). Si quieres ejecutar
   React/SSR en PanOS, usa un bundle para Node.js o un servidor compatible
   con Node (por ejemplo Express + react-dom/server).
 */
@@ -58,25 +58,25 @@ server.listen(8080, () => {
 // ================================================================
 /*
   Ejemplo de file server removido (Bun-specific).
-  Para servir archivos en Node.js, usa 'express' o el módulo 'http' y
-  'fs.createReadStream' para servir archivos estáticos.
+  Para servir archivos en Node.js, usa 'express' o el modulo 'http' y
+  'fs.createReadStream' para servir archivos estaticos.
 */
 
 // ================================================================
 // EJEMPLO 6: Monitoring & Metrics (Prometheus-compatible)
 // ================================================================
 /*
-  Ejemplo de métricas removido (Bun.serve). Para métricas con Node.js,
+  Ejemplo de metricas removido (Bun.serve). Para metricas con Node.js,
   monta un endpoint /metrics usando 'prom-client' o genera texto
-  Prometheus manualmente y devuélvelo con 'res.end'.
+  Prometheus manualmente y devuelvelo con 'res.end'.
 */
 
 // ================================================================
-// EJEMPLO 7: Compilador / Intérprete (Meta - Code as Data)
+// EJEMPLO 7: Compilador / Interprete (Meta - Code as Data)
 // ================================================================
 /*
-  Ejemplo de intérprete dinámico removido. Para este tipo de capacidades
-  en Node.js, valida y sandboxea estrictamente antes de evaluar código.
+  Ejemplo de interprete dinamico removido. Para este tipo de capacidades
+  en Node.js, valida y sandboxea estrictamente antes de evaluar codigo.
 */
 
 // ================================================================

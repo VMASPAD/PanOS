@@ -1,13 +1,13 @@
 #!/bin/bash
 
-# PanOS - Script de instalación de dependencias
+# PanOS - Dependency Installation Script
 
 echo "═══════════════════════════════════════"
-echo "  PanOS - Instalar Dependencias"
+echo "  PanOS - Install Dependencies"
 echo "═══════════════════════════════════════"
 echo ""
 
-# Lista de paquetes necesarios
+# List of required packages
 PACKAGES=(
     "build-essential"
     "bc"
@@ -25,13 +25,13 @@ PACKAGES=(
     "qemu-system-x86"
 )
 
-echo "Instalando paquetes necesarios..."
+echo "Installing required packages..."
 echo ""
 
 sudo apt-get update -qq
 sudo apt-get install -y "${PACKAGES[@]}"
 
 echo ""
-echo "✓ Dependencias instaladas correctamente"
+echo "✓ Dependencies installed successfully"
 echo ""
-echo "Siguiente paso: ./1-build.sh"
+echo "Next step: ./1-build.sh"

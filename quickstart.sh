@@ -2,7 +2,7 @@
 
 #################################################################
 # PanOS - Quick Start Script
-# Una sola línea para crear tu OS
+# One command to create your OS
 #################################################################
 
 set -e
@@ -13,31 +13,31 @@ echo "║         Greatest OS for Any Task - Pan OS Edition         ║"
 echo "╚═══════════════════════════════════════════════════════════╝"
 echo ""
 
-# Detectar directorio del script
+# Detect script directory
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
-# Verificar que build-PanOS-os.sh existe
+# Check that build-PanOS-os.sh exists
 if [ ! -f "${SCRIPT_DIR}/build-PanOS-os.sh" ]; then
-    echo "❌ Error: build-PanOS-os.sh no encontrado en ${SCRIPT_DIR}"
+    echo "❌ Error: build-PanOS-os.sh not found in ${SCRIPT_DIR}"
     exit 1
 fi
 
-echo "📋 Verificar requisitos previos..."
-echo "   ejecutando verificación de dependencias..."
+echo "📋 Checking prerequisites..."
+echo "   running dependency verification..."
 echo ""
 
-# Ejecutar script de build en modo automático
+# Run build script in automatic mode
 "${SCRIPT_DIR}/build-PanOS-os.sh" --auto
 
 if [ $? -eq 0 ]; then
     echo ""
     echo "╔═══════════════════════════════════════════════════════════╗"
-    echo "║              ✅ BUILD COMPLETADO EXITOSAMENTE             ║"
+    echo "║              ✅ BUILD COMPLETED SUCCESSFULLY              ║"
     echo "╚═══════════════════════════════════════════════════════════╝"
     echo ""
-    echo "📍 Tu PanOS está listo en: ~/pan-os/build/"
+    echo "📍 Your PanOS is ready at: ~/pan-os/build/"
     echo ""
-    echo "🚀 Para ejecutar de nuevo:"
+    echo "🚀 To run it again:"
     echo "   qemu-system-x86_64 \\"
     echo "     -kernel ~/pan-os/build/vmlinuz \\"
     echo "     -initrd ~/pan-os/build/initramfs.cpio \\"
@@ -45,6 +45,6 @@ if [ $? -eq 0 ]; then
     echo ""
 else
     echo ""
-    echo "❌ Error durante la construcción"
+    echo "❌ Error during build"
     exit 1
 fi

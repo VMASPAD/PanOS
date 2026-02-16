@@ -1,13 +1,13 @@
 #!/bin/bash
 
-# Script simple para ejecutar QEMU con debug
+# Simple script para ejecutar QEMU con debug
 
 WORKSPACE="${HOME}/pan-os"
 BUILD="${WORKSPACE}/build"
 
 if [ ! -f "${BUILD}/vmlinuz" ] || [ ! -f "${BUILD}/initramfs.cpio" ]; then
-    echo "Error: Imágenes no encontradas en ${BUILD}/"
-    echo "Ejecuta primero: ./build-simple.sh"
+    echo "Error: Imagenes not foundadas en ${BUILD}/"
+    echo "Run first: ./build-simple.sh"
     exit 1
 fi
 

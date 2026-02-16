@@ -15,18 +15,18 @@ RED='\033[0;31m'
 NC='\033[0m'
 
 echo -e "${YELLOW}═══════════════════════════════════════════════════════════${NC}"
-echo -e "${YELLOW}  Crear ISO Booteable - PanOS${NC}"
+echo -e "${YELLOW}  Create Bootable ISO - PanOS${NC}"
 echo -e "${YELLOW}═══════════════════════════════════════════════════════════${NC}"
 echo ""
 
-# Verificar archivos necesarios
+# Check files necessarys
 if [ ! -f "${BUILD_DIR}/vmlinuz" ] || [ ! -f "${BUILD_DIR}/initramfs.cpio" ]; then
-    echo -e "${RED}✗ Error: vmlinuz o initramfs.cpio no encontrados${NC}"
-    echo "  Ejecuta primero: ./build-iso-with-NodeJS.sh"
+    echo -e "${RED}✗ Error: vmlinuz o initramfs.cpio not foundados${NC}"
+    echo "  Run first: ./build-iso-with-NodeJS.sh"
     exit 1
 fi
 
-echo "[1/3] Preparando estructura ISO..."
+echo "[1/3] Preparing estructura ISO..."
 rm -rf "${ISO_DIR}"
 mkdir -p "${ISO_DIR}/boot/grub"
 
@@ -34,9 +34,9 @@ mkdir -p "${ISO_DIR}/boot/grub"
 cp "${BUILD_DIR}/vmlinuz" "${ISO_DIR}/boot/vmlinuz"
 cp "${BUILD_DIR}/initramfs.cpio" "${ISO_DIR}/boot/initramfs.cpio"
 
-echo "[2/3] Creando configuración GRUB..."
+echo "[2/3] Creating configuracion GRUB..."
 
-# Crear grub.cfg
+# Create grub.cfg
 cat > "${ISO_DIR}/boot/grub/grub.cfg" << 'GRUB_EOF'
 menuentry 'PanOS' {
     insmod gzio
@@ -49,19 +49,19 @@ menuentry 'PanOS' {
 }
 GRUB_EOF
 
-echo "[3/3] Generando ISO..."
+echo "[3/3] Generating ISO..."
 
-# Método 1: Intentar con grub-mkrescue (más simple)
+# Metodo 1: Intentar con grub-mkrescue (mas simple)
 if command -v grub-mkrescue &> /dev/null; then
     echo "  Usando: grub-mkrescue"
     grub-mkrescue -o "${OUTPUT_ISO}" "${ISO_DIR}" 2>/dev/null && {
-        echo -e "${GREEN}✓ ISO creada exitosamente${NC}"
+        echo -e "${GREEN}✓ ISO creada successfully${NC}"
         ls -lh "${OUTPUT_ISO}"
         exit 0
     }
 fi
 
-# Método 2: Intentar con xorrisofs
+# Metodo 2: Intentar con xorrisofs
 if command -v xorrisofs &> /dev/null; then
     echo "  Usando: xorrisofs"
     xorrisofs -o "${OUTPUT_ISO}" \
@@ -71,20 +71,20 @@ if command -v xorrisofs &> /dev/null; then
         -R -J \
         -volid "PanOS_OS" \
         "${ISO_DIR}" 2>/dev/null && {
-        echo -e "${GREEN}✓ ISO creada exitosamente${NC}"
+        echo -e "${GREEN}✓ ISO creada successfully${NC}"
         ls -lh "${OUTPUT_ISO}"
         exit 0
     }
 fi
 
-# Método 3: Intentar con mkisofs
+# Metodo 3: Intentar con mkisofs
 if command -v mkisofs &> /dev/null; then
     echo "  Usando: mkisofs"
     mkisofs -o "${OUTPUT_ISO}" \
         -R -J \
         -volid "PanOS_OS" \
         "${ISO_DIR}" 2>/dev/null && {
-        echo -e "${GREEN}✓ ISO creada exitosamente${NC}"
+        echo -e "${GREEN}✓ ISO creada successfully${NC}"
         ls -lh "${OUTPUT_ISO}"
         exit 0
     }

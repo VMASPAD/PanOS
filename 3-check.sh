@@ -1,59 +1,59 @@
 #!/bin/bash
 
-# PanOS - Verificar estado del build
+# PanOS - Check Build Status
 
 BUILD_DIR="$HOME/pan-os-iso/build"
 
 echo "═══════════════════════════════════════"
-echo "  PanOS - Estado del Build"
+echo "  PanOS - Build Status"
 echo "═══════════════════════════════════════"
 echo ""
 
 if [[ ! -d "$BUILD_DIR" ]]; then
-    echo "❌ Directorio build no existe"
-    echo "   Ejecuta: ./1-build.sh"
+    echo "❌ Build directory does not exist"
+    echo "   Run: ./1-build.sh"
     exit 1
 fi
 
-echo "Verificando archivos..."
+echo "Checking files..."
 echo ""
 
-# Verificar kernel
+# Check kernel
 if [[ -f "$BUILD_DIR/vmlinuz" ]]; then
     SIZE=$(ls -lh "$BUILD_DIR/vmlinuz" | awk '{print $5}')
     echo "✅ Kernel (vmlinuz) .......... $SIZE"
 else
-    echo "❌ Kernel no encontrado"
+    echo "❌ Kernel not found"
 fi
 
-# Verificar initramfs
+# Check initramfs
 if [[ -f "$BUILD_DIR/initramfs.cpio" ]]; then
     SIZE=$(ls -lh "$BUILD_DIR/initramfs.cpio" | awk '{print $5}')
     echo "✅ Initramfs ................. $SIZE"
 else
-    echo "❌ Initramfs no encontrado"
+    echo "❌ Initramfs not found"
 fi
 
-# Verificar Node.js
+# Check Node.js
 if cpio -t < "$BUILD_DIR/initramfs.cpio" 2>/dev/null | grep -q "^bin/node$"; then
-    echo "✅ Node.js integrado"
+    echo "✅ Node.js integrated"
 else
-    echo "⚠️  Node.js no encontrado"
+    echo "⚠️  Node.js not found"
 fi
 
-# Verificar npm
+# Check npm
 if cpio -t < "$BUILD_DIR/initramfs.cpio" 2>/dev/null | grep -q "^bin/npm$"; then
-    echo "✅ npm integrado"
+    echo "✅ npm integrated"
 else
-    echo "⚠️  npm no encontrado"
+    echo "⚠️  npm not found"
 fi
 
-# Verificar ISO
+# Check ISO
 if [[ -f "$BUILD_DIR/pan-os-booteable.iso" ]]; then
     SIZE=$(ls -lh "$BUILD_DIR/pan-os-booteable.iso" | awk '{print $5}')
-    echo "✅ ISO Booteable ............. $SIZE"
+    echo "✅ Bootable ISO ............. $SIZE"
 else
-    echo "⚠️  ISO no creada (ejecuta: ./4-create-iso.sh)"
+    echo "⚠️  ISO not created (run: ./4-create-iso.sh)"
 fi
 
 echo ""
@@ -61,12 +61,12 @@ echo "════════════════════════�
 echo ""
 
 if [[ -f "$BUILD_DIR/vmlinuz" ]] && [[ -f "$BUILD_DIR/initramfs.cpio" ]]; then
-    echo "✓ Sistema listo para usar"
+    echo "✓ System ready to use"
     echo ""
-    echo "Siguiente paso:"
-    echo "  ./2-run.sh         (ejecutar en QEMU)"
-    echo "  ./4-create-iso.sh  (crear ISO booteable)"
+    echo "Next step:"
+    echo "  ./2-run.sh         (run in QEMU)"
+    echo "  ./4-create-iso.sh  (create bootable ISO)"
 else
-    echo "❌ Build incompleto"
-    echo "   Ejecuta: ./1-build.sh"
+    echo "❌ Build incomplete"
+    echo "   Run: ./1-build.sh"
 fi

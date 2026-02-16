@@ -17,19 +17,19 @@ echo ""
 
 # Check if images exist
 if [ ! -f "${BUILD}/vmlinuz" ] || [ ! -f "${BUILD}/initramfs.cpio" ]; then
-    echo -e "${RED}✗ Imágenes no encontradas en ${BUILD}/${NC}"
-    echo "Ejecuta primero: ./build-iso-with-NodeJS.sh"
+    echo -e "${RED}✗ Imagenes not foundadas en ${BUILD}/${NC}"
+    echo "Run first: ./build-iso-with-NodeJS.sh"
     exit 1
 fi
 
-echo "Imágenes disponibles:"
+echo "Imagenes disponibles:"
 ls -lh "${BUILD}/" | grep -E "vmlinuz|initramfs|iso"
 echo ""
 
 if [ -f "${BUILD}/PanOS-os.iso" ] && [ -s "${BUILD}/PanOS-os.iso" ]; then
     echo "Opciones de arranque:"
-    echo "1) Ejecutar desde ISO (booteo real)"
-    echo "2) Ejecutar desde initramfs (rápido)"
+    echo "1) Runr desde ISO (booteo real)"
+    echo "2) Runr desde initramfs (rapido)"
     echo ""
     read -p "Elige (1-2): " option
 else
@@ -38,17 +38,17 @@ fi
 
 echo ""
 echo "Opciones de red:"
-echo "1) User mode (NAT) - Fácil, no requiere permisos root"
-echo "2) Bridge - Más completo, requiere configuración previa"
+echo "1) User mode (NAT) - Facil, no requires permisos root"
+echo "2) Bridge - Mas complete, requires configuracion previa"
 echo ""
 read -p "Elige tipo de red (1-2) [1]: " net_option
 net_option=${net_option:-1}
 
-# Configuración de red
+# Configuracion de red
 if [ "$net_option" = "2" ]; then
-    # Bridge mode - requiere tap configurado
-    echo -e "${YELLOW}Modo Bridge requiere configuración previa${NC}"
-    echo "Comandos necesarios (ejecutar como root):"
+    # Bridge mode - requires tap configurado
+    echo -e "${YELLOW}Modo Bridge requires configuracion previa${NC}"
+    echo "Comandos necessarys (ejecutar como root):"
     echo "  ip tuntap add dev tap0 mode tap user \$(whoami)"
     echo "  ip link set tap0 up"
     echo "  ip link add br0 type bridge"
@@ -63,15 +63,15 @@ if [ "$net_option" = "2" ]; then
     fi
     NET_OPTS="-netdev tap,id=net0,ifname=tap0,script=no,downscript=no,hostfwd=tcp::2222-:22,hostfwd=tcp::8080-:80,hostfwd=tcp::5173-:5173 -device virtio-net-pci,netdev=net0"
 else
-    # User mode (más simple, funciona sin root)
+    # User mode (mas simple, funciona sin root)
     NET_OPTS="-netdev user,id=net0,hostfwd=tcp::2222-:22,hostfwd=tcp::8080-:80,hostfwd=tcp::5173-:5173 -device virtio-net-pci,netdev=net0"
 fi
 
 echo ""
-echo "Configuración de memoria:"
-echo "1) 1 GB   (mínimo, para desarrollo ligero)"
-echo "2) 2 GB   (recomendado para npm/vite)"
-echo "3) 4 GB   (óptimo para compilación)"
+echo "Configuracion de memoria:"
+echo "1) 1 GB   (minimo, para desarrollo ligero)"
+echo "2) 2 GB   (recommended para npm/vite)"
+echo "3) 4 GB   (optimo para Compilationon)"
 echo ""
 read -p "Elige cantidad de RAM (1-3) [2]: " mem_option
 mem_option=${mem_option:-2}

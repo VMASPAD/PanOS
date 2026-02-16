@@ -1,20 +1,20 @@
 #!/bin/bash
 
-# PanOS - Crear ISO Booteable
+# PanOS - Create Bootable ISO
 
 BUILD_DIR="$HOME/pan-os-iso/build"
-ISO_DIR="$BUILD_DIR/grub-iso"
-OUTPUT_ISO="$BUILD_DIR/pan-os-booteable.iso"
+ISO_DIR="${BUILD_DIR}/grub-iso"
+OUTPUT_ISO="${BUILD_DIR}/pan-os-booteable.iso"
 
 echo "═══════════════════════════════════════"
-echo "  PanOS - Crear ISO Booteable"
+echo "  PanOS - Create Bootable ISO"
 echo "═══════════════════════════════════════"
 echo ""
 
-# Verificar archivos necesarios
+# Verify required files
 if [[ ! -f "$BUILD_DIR/vmlinuz" ]] || [[ ! -f "$BUILD_DIR/initramfs.cpio" ]]; then
-    echo "❌ Error: vmlinuz o initramfs.cpio no encontrados"
-    echo "   Ejecuta primero: ./1-build.sh"
+    echo "❌ Error: vmlinuz or initramfs.cpio not found"
+    echo "   Run first: ./1-build.sh"
     exit 1
 fi
 
@@ -68,7 +68,7 @@ if command -v grub-mkrescue &> /dev/null; then
     
     # Check if it actually produced a valid file
     if [[ ! -f "$OUTPUT_ISO" ]] || [[ ! -s "$OUTPUT_ISO" ]]; then
-        echo "  grub-mkrescue no generó ISO, intentando alternativa..."
+        echo "  grub-mkrescue no genero ISO, intentando alternativa..."
         rm -f "$OUTPUT_ISO"
     fi
 fi
@@ -119,7 +119,7 @@ if [[ -f "$OUTPUT_ISO" ]] && [[ -s "$OUTPUT_ISO" ]]; then
     echo ""
     echo "✅ ISO Booteable creada: $SIZE"
     echo ""
-    echo "Ubicación: $OUTPUT_ISO"
+    echo "Ubicacion: $OUTPUT_ISO"
     echo ""
     echo "═══════════════════════════════════════"
     echo "USAR LA ISO:"
@@ -141,6 +141,6 @@ else
     echo "Alternativa: QEMU puede arrancar directamente del kernel + initramfs:"
     echo "  ./2-run.sh"
     echo ""
-    echo "ISO creació es opcional. El sistema funciona sin ella."
+    echo "ISO creacio es opcional. El sistema funciona sin ella."
     exit 0
 fi

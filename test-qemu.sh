@@ -1,8 +1,8 @@
 #!/bin/bash
 
 #################################################################
-# Test script para verificar PanOS & QEMU Setup
-# Optimizado para terminal interactiva
+# Test script to verify PanOS and QEMU Setup
+# Optimized for interactive terminal
 #################################################################
 
 GREEN='\033[0;32m'
@@ -17,58 +17,58 @@ echo -e "${BLUE}║   PanOS - QEMU & Terminal Interactiva Test     ║${NC}"
 echo -e "${BLUE}╚════════════════════════════════════════════════════════╝${NC}"
 echo ""
 
-# Test 1: QEMU instalado
-echo "📋 Test 1: Verificar QEMU..."
+# Test 1: QEMU installed
+echo "📋 Test 1: Check QEMU..."
 if command -v qemu-system-x86_64 &> /dev/null; then
-    echo -e "${GREEN}✅ QEMU instalado${NC}"
+    echo -e "${GREEN}✅ QEMU installed${NC}"
     qemu-system-x86_64 --version | head -1
 else
-    echo -e "${RED}❌ QEMU no está instalado${NC}"
-    echo "   Instala con: sudo apt install qemu-system-x86_64"
+    echo -e "${RED}❌ QEMU not installed${NC}"
+    echo "   Install with: sudo apt install qemu-system-x86_64"
     exit 1
 fi
 
 echo ""
 
-# Test 2: Verificar archivos de imagen
-echo "📋 Test 2: Verificar archivos de imagen..."
+# Test 2: Verify image files
+echo "📋 Test 2: Check image files..."
 KERNEL="$HOME/pan-os/build/vmlinuz"
 INITRD="$HOME/pan-os/build/initramfs.cpio"
 
 if [ -f "$KERNEL" ]; then
     KSIZE=$(du -h "$KERNEL" | cut -f1)
-    echo -e "${GREEN}✅ Kernel encontrado${NC} (tamaño: $KSIZE)"
+    echo -e "${GREEN}✅ Kernel found${NC} (size: $KSIZE)"
 else
-    echo -e "${RED}❌ Kernel no encontrado en $KERNEL${NC}"
-    echo "   Ejecuta primero: ./quickstart.sh"
+    echo -e "${RED}❌ Kernel not found at $KERNEL${NC}"
+    echo "   Run first: ./quickstart.sh"
     fi
 
 if [ -f "$INITRD" ]; then
     ISIZE=$(du -h "$INITRD" | cut -f1)
-    echo -e "${GREEN}✅ Initramfs encontrado${NC} (tamaño: $ISIZE)"
+    echo -e "${GREEN}✅ Initramfs found${NC} (size: $ISIZE)"
 else
-    echo -e "${RED}❌ Initramfs no encontrado en $INITRD${NC}"
-    echo "   Ejecuta primero: ./quickstart.sh"
+    echo -e "${RED}❌ Initramfs not found at $INITRD${NC}"
+    echo "   Run first: ./quickstart.sh"
 fi
 
 echo ""
 
-# Test 3: Verificar boot.js contiene shell interactiva
-echo "📋 Test 3: Verificar boot.js (debe tener spawn bash)..."
+# Test 3: Check boot.js contains interactive shell
+echo "📋 Test 3: Verify boot.js (should have spawn bash)..."
 if [ -d "$HOME/pan-os/rootfs" ]; then
     if grep -q "spawn" "$HOME/pan-os/rootfs/boot.js" 2>/dev/null; then
         echo -e "${GREEN}✅ boot.js contiene terminal interactiva${NC}"
     else
-        echo -e "${YELLOW}⚠️  boot.js podría no tener shell interactiva${NC}"
+        echo -e "${YELLOW}⚠️  boot.js podria no tener shell interactiva${NC}"
         echo "   (Esto puede estar bien, dep ending on your setup)"
     fi
 else
-    echo -e "${YELLOW}⚠️  Script no compilado aún, saltando test de boot.js${NC}"
+    echo -e "${YELLOW}⚠️  Script no compilado aun, saltando test de boot.js${NC}"
 fi
 
 echo ""
 
-# Test 4: Mostrar comando QEMU recomendado
+# Test 4: Mostrar comando QEMU recommended
 echo "📋 Test 4: Comando QEMU (terminal interactiva):"
 echo ""
 echo -e "${BLUE}qemu-system-x86_64 \\${NC}"
@@ -82,11 +82,11 @@ echo -e "${BLUE}  -smp 2 \\${NC}"
 echo -e "${BLUE}  -monitor none${NC}"
 echo ""
 
-# Test 5: Información útil
-echo "📋 Test 5: Información sobre el uso:"
+# Test 5: Informacion util
+echo "📋 Test 5: Informacion sobre el uso:"
 echo ""
-echo "Después de iniciar QEMU verás:"
-echo "  1. Información del sistema (kernel, NodeJS, memoria)"
+echo "Despues de iniciar QEMU veras:"
+echo "  1. Informacion del sistema (kernel, NodeJS, memoria)"
 echo "  2. Lista de comandos disponibles"
 echo "  3. Un prompt: ${YELLOW}PanOS\$${NC}"
 echo ""
@@ -97,8 +97,8 @@ echo "  ${YELLOW}PanOS\$${NC} free -h"
 echo "  ${YELLOW}PanOS\$${NC} uptime"
 echo ""
 
-# Test 6: Ofrecer ejecutar
-echo "📋 Test 6: ¿Deseas probar ahora?"
+# Test 6: Offer to run
+echo "📋 Test 6: Do you want to test now?"
 if [ -f "$KERNEL" ] && [ -f "$INITRD" ]; then
     read -p "Ejecutar QEMU (s/n): " choice
     if [[ $choice =~ ^[Ss]$ ]]; then
@@ -121,10 +121,10 @@ if [ -f "$KERNEL" ] && [ -f "$INITRD" ]; then
           -monitor none
         
         echo ""
-        echo -e "${GREEN}✅ PanOS terminó${NC}"
+        echo -e "${GREEN}✅ PanOS termino${NC}"
     fi
 else
-    echo -e "${RED}⚠️  Falta imagen. Ejecuta './quickstart.sh' primero${NC}"
+    echo -e "${RED}⚠️  Falta imagen. Ejecuta './quickstart.sh' first${NC}"
 fi
 
 echo ""

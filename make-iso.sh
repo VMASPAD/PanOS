@@ -16,18 +16,18 @@ RED='\033[0;31m'
 NC='\033[0m'
 
 echo -e "${YELLOW}═══════════════════════════════════════════════════════════${NC}"
-echo -e "${YELLOW}  Crear ISO Booteable - PanOS${NC}"
+echo -e "${YELLOW}  Create Bootable ISO - PanOS${NC}"
 echo -e "${YELLOW}═══════════════════════════════════════════════════════════${NC}"
 echo ""
 
-# Verificar archivos necesarios
+# Check files necessarys
 if [ ! -f "${BUILD_DIR}/vmlinuz" ] || [ ! -f "${BUILD_DIR}/initramfs.cpio" ]; then
-    echo -e "${RED}✗ Error: vmlinuz o initramfs.cpio no encontrados${NC}"
-    echo "  Ejecuta primero: ./build-iso-with-NodeJS.sh"
+    echo -e "${RED}✗ Error: vmlinuz o initramfs.cpio not foundados${NC}"
+    echo "  Run first: ./build-iso-with-NodeJS.sh"
     exit 1
 fi
 
-echo "[1/3] Preparando estructura ISO..."
+echo "[1/3] Preparing estructura ISO..."
 rm -rf "${ISO_DIR}"
 mkdir -p "${ISO_DIR}/boot"
 mkdir -p "${ISO_DIR}/isolinux"
@@ -38,7 +38,7 @@ cp "${BUILD_DIR}/initramfs.cpio" "${ISO_DIR}/boot/initramfs.cpio"
 
 echo "[2/3] Configurando ISOLINUX..."
 
-# Crear configuración de ISOLINUX
+# Create configuracion de ISOLINUX
 cat > "${ISO_DIR}/isolinux/isolinux.cfg" << 'ISOLINUX_EOF'
 DEFAULT linux
 TIMEOUT 50
@@ -48,12 +48,12 @@ LABEL linux
     APPEND initrd=/boot/initramfs.cpio console=ttyS0 console=tty0 rw
 ISOLINUX_EOF
 
-# Crear directorio de boot.cat (requerido)
+# Create Directory de boot.cat (requerido)
 touch "${ISO_DIR}/isolinux/boot.cat"
 
-echo "[3/3] Generando ISO booteable..."
+echo "[3/3] Generating ISO booteable..."
 
-# Crear ISO con xorrisofs (mejor soporte BIOS/UEFI)
+# Create ISO con xorrisofs (mejor soporte BIOS/UEFI)
 xorrisofs \
     -o "${OUTPUT_ISO}" \
     -b isolinux/isolinux.bin \
@@ -65,18 +65,18 @@ xorrisofs \
     -V "PanOS_OS" \
     "${ISO_DIR}" 2>&1 | grep -v "^xorriso"
 
-# Agregar soporte de arranque híbrido BIOS/UEFI con isohybrid
+# Agregar soporte de arranque hibrido BIOS/UEFI con isohybrid
 echo "  Mejorando compatibilidad de BIOS..."
 isohybrid "${OUTPUT_ISO}" 2>/dev/null || true
 
-# Verificar ISO
+# Check ISO
 if [ -f "${OUTPUT_ISO}" ] && [ -s "${OUTPUT_ISO}" ]; then
     SIZE=$(ls -lh "${OUTPUT_ISO}" | awk '{print $5}')
     echo ""
     echo -e "${GREEN}✓ ISO Booteable creada${NC}"
     echo ""
-    echo "Ubicación: ${OUTPUT_ISO}"
-    echo "Tamaño: ${SIZE}"
+    echo "Ubicacion: ${OUTPUT_ISO}"
+    echo "Tamano: ${SIZE}"
     echo ""
     echo "════════════════════════════════════════════════════════════"
     echo "COMANDOS PARA USAR LA ISO:"

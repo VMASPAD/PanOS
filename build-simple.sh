@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Script de diagnóstico para PanOS
+# Script for diagnostico para PanOS
 
 set -e
 
@@ -21,19 +21,19 @@ echo -e "${BLUE}═════════════════════�
 echo ""
 
 # Step 1: Clean previous build
-echo -e "${YELLOW}[1/4] Limpiando build anterior...${NC}"
+echo -e "${YELLOW}[1/4] Cleaning build anterior...${NC}"
 rm -rf "${WORKSPACE}" 2>/dev/null || true
 mkdir -p "${WORKSPACE}/kernel-src" "${ROOTFS}" "${BUILD}"
 echo -e "${GREEN}✓ Limpieza completada${NC}"
 echo ""
 
 # Step 2: Download and minimal kernel
-echo -e "${YELLOW}[2/4] Descargando y compilando kernel minimal...${NC}"
+echo -e "${YELLOW}[2/4] Downloading y compilando kernel minimal...${NC}"
 cd "${WORKSPACE}/kernel-src"
 
 # Download kernel
 if [ ! -f "linux-${KERNEL_VERSION}.tar.xz" ]; then
-    echo "  Descargando kernel (puede tomar 2-5 min)..."
+    echo "  Downloading kernel (puede tomar 2-5 min)..."
     wget -q "https://cdn.kernel.org/pub/linux/kernel/v6.x/linux-${KERNEL_VERSION}.tar.xz" || {
         echo -e "${RED}Error descargando kernel${NC}"
         exit 1
@@ -73,7 +73,7 @@ EOF
 
 make oldconfig < /dev/null > /dev/null 2>&1
 
-echo "  Compilando kernel (puede tomar 10-30 min)..."
+echo "  Compiling kernel (puede tomar 10-30 min)..."
 make -j$(nproc) 2>&1 | tail -20
 
 if [ ! -f "arch/x86/boot/bzImage" ]; then
@@ -86,11 +86,11 @@ echo -e "${GREEN}✓ Kernel compilado y copiado${NC}"
 echo ""
 
 # Step 3: Create simple rootfs
-echo -e "${YELLOW}[3/4] Creando rootfs simple...${NC}"
+echo -e "${YELLOW}[3/4] Creating rootfs simple...${NC}"
 cd "${ROOTFS}"
 
 # Descargar busybox
-echo "  Descargando busybox..."
+echo "  Downloading busybox..."
 mkdir -p bin
 cd bin
 wget -q "https://busybox.net/downloads/binaries/1.35.0-x86_64-linux-musl/busybox" -O busybox || {
@@ -119,7 +119,7 @@ busybox mount -t sysfs sysfs /sys
 busybox mount -t devtmpfs devtmpfs /dev
 busybox mount -t tmpfs tmpfs /tmp
 
-echo "Creando dispositivos..."
+echo "Creating dispositivos..."
 [ -e /dev/console ] || busybox mknod /dev/console c 5 1
 [ -e /dev/tty ] || busybox mknod /dev/tty c 5 0
 [ -e /dev/null ] || busybox mknod /dev/null c 1 3
@@ -137,7 +137,7 @@ echo -e "${GREEN}✓ Rootfs creado${NC}"
 echo ""
 
 # Step 4: Create initramfs
-echo -e "${YELLOW}[4/4] Empaquetando initramfs...${NC}"
+echo -e "${YELLOW}[4/4] Packageando initramfs...${NC}"
 cd "${ROOTFS}"
 find . -print0 | cpio -0 -o -H newc > "${BUILD}/initramfs.cpio" 2>/dev/null
 

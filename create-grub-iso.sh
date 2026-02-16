@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Script SIMPLE para crear ISO booteable con GRUB
-# (grub-mkrescue ya está instalado)
+# (grub-mkrescue ya esta instalado)
 
 BUILD_DIR="$HOME/pan-os-iso/build"
 ISO_DIR="${BUILD_DIR}/grub-iso"
@@ -13,16 +13,16 @@ YELLOW='\033[1;33m'
 RED='\033[0;31m'
 NC='\033[0m'
 
-echo -e "${YELLOW}Crear ISO Booteable con GRUB${NC}"
+echo -e "${YELLOW}Create Bootable ISO con GRUB${NC}"
 echo ""
 
-# Verificar archivos
+# Check files
 if [ ! -f "${BUILD_DIR}/vmlinuz" ] || [ ! -f "${BUILD_DIR}/initramfs.cpio" ]; then
-    echo -e "${RED}✗ vmlinuz o initramfs.cpio no encontrados${NC}"
+    echo -e "${RED}✗ vmlinuz o initramfs.cpio not foundados${NC}"
     exit 1
 fi
 
-echo "[1/2] Preparando estructura..."
+echo "[1/2] Preparing estructura..."
 rm -rf "${ISO_DIR}"
 mkdir -p "${ISO_DIR}/boot/grub"
 
@@ -30,7 +30,7 @@ mkdir -p "${ISO_DIR}/boot/grub"
 cp "${BUILD_DIR}/vmlinuz" "${ISO_DIR}/boot/"
 cp "${BUILD_DIR}/initramfs.cpio" "${ISO_DIR}/boot/"
 
-# Crear grub.cfg (IMPORTANTE: configuración correcta)
+# Create grub.cfg (IMPORTANTE: configuracion correcta)
 cat > "${ISO_DIR}/boot/grub/grub.cfg" << 'GRUBCFG'
 insmod all_video
 insmod gfxterm
@@ -59,7 +59,7 @@ menuentry "PanOS (serial)" {
 }
 GRUBCFG
 
-echo "[2/2] Generando ISO con grub-mkrescue..."
+echo "[2/2] Generating ISO con grub-mkrescue..."
 grub-mkrescue \
     --output="${OUTPUT_ISO}" \
     --label=PanOS_OS \
@@ -68,10 +68,10 @@ grub-mkrescue \
 if [ -f "${OUTPUT_ISO}" ] && [ -s "${OUTPUT_ISO}" ]; then
     SIZE=$(ls -lh "${OUTPUT_ISO}" | awk '{print $5}')
     
-    echo -e "${GREEN}✓ ISO Booteable creada exitosamente${NC}"
+    echo -e "${GREEN}✓ ISO Booteable creada successfully${NC}"
     echo ""
     echo "Archivo: ${OUTPUT_ISO}"
-    echo "Tamaño: ${SIZE}"
+    echo "Tamano: ${SIZE}"
     echo ""
     echo "════════════════════════════════════════════════════════════"
     echo "PARA USAR EN QEMU:"

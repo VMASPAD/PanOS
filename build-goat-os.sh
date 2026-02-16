@@ -14,7 +14,7 @@ YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
-# Configuración
+# Configuracion
 KERNEL_VERSION="6.6.15"
 WORKSPACE_DIR="${HOME}/pan-os"
 KERNEL_DIR="${WORKSPACE_DIR}/kernel-src"
@@ -46,7 +46,7 @@ print_warning() {
 }
 
 check_dependencies() {
-    print_header "Verificando dependencias"
+    print_header "Verificando Dependencies"
     
     local required_tools=("gcc" "make" "bison" "flex" "wget" "unzip" "cpio" "qemu-system-x86_64")
     local missing_tools=()
@@ -65,7 +65,7 @@ check_dependencies() {
         return 1
     fi
     
-    print_success "Todas las dependencias están instaladas"
+    print_success "Todas las Dependencies estan instaladas"
 }
 
 setup_workspace() {
@@ -74,11 +74,11 @@ setup_workspace() {
     mkdir -p "${WORKSPACE_DIR}"/{kernel-src,rootfs,build}
     cd "${WORKSPACE_DIR}"
     
-    print_success "Directorios creados en: ${WORKSPACE_DIR}"
+    print_success "Directorys creados en: ${WORKSPACE_DIR}"
 }
 
 download_kernel() {
-    print_header "Descargando Kernel Linux ${KERNEL_VERSION}"
+    print_header "Downloading Kernel Linux ${KERNEL_VERSION}"
     
     if [ -d "${KERNEL_DIR}/linux-${KERNEL_VERSION}" ]; then
         print_warning "Kernel ya existe, saltando descarga"
@@ -88,7 +88,7 @@ download_kernel() {
     cd "${KERNEL_DIR}"
     
     local kernel_url="https://cdn.kernel.org/pub/linux/kernel/v6.x/linux-${KERNEL_VERSION}.tar.xz"
-    print_warning "Descargando desde: ${kernel_url}"
+    print_warning "Downloading desde: ${kernel_url}"
     
     if ! wget -q "${kernel_url}"; then
         print_error "Error descargando kernel"
@@ -96,7 +96,7 @@ download_kernel() {
     fi
     
     tar -xf "linux-${KERNEL_VERSION}.tar.xz"
-    print_success "Kernel descargado y extraído"
+    print_success "Kernel descargado y extraido"
 }
 
 configure_kernel() {
@@ -110,7 +110,7 @@ configure_kernel() {
     # Usar allnoconfig como base y agregar lo esencial
     make allnoconfig > /dev/null 2>&1
     
-    # Configuración ESENCIAL para que funcione
+    # Configuracion ESENCIAL para que funcione
     cat > .config << 'EOF'
 CONFIG_SERIAL_8250=y
 CONFIG_SERIAL_8250_CONSOLE=y
@@ -160,11 +160,11 @@ EOF
     # Aplicar las opciones
     make oldconfig < /dev/null > /dev/null 2>&1
     
-    print_success "Kernel configurado (base mínima funcional)"
+    print_success "Kernel configurado (base minima funcional)"
 }
 
 compile_kernel() {
-    print_header "Compilando Kernel (esto puede tomar varios minutos)"
+    print_header "Compiling Kernel (esto puede tomar varios minutos)"
     
     cd "${KERNEL_DIR}/linux-${KERNEL_VERSION}"
     
@@ -174,7 +174,7 @@ compile_kernel() {
     make -j"${cpu_count}" > /tmp/kernel_build.log 2>&1
     
     if [ ! -f "arch/x86/boot/bzImage" ]; then
-        print_error "Compilación del kernel falló. Ver: /tmp/kernel_build.log"
+        print_error "Compilationon del kernel fallo. Ver: /tmp/kernel_build.log"
         return 1
     fi
     
@@ -187,15 +187,15 @@ setup_rootfs() {
     
     cd "${ROOTFS_DIR}"
     
-    # Crear estructura de directorios
+    # Create estructura de Directorys
     mkdir -p bin dev etc lib proc sbin sys tmp root \
              usr/bin usr/lib usr/sbin var/lib var/log boot
     
-    print_success "Estructura de directorios creada"
+    print_success "Estructura de Directorys creada"
 }
 
 download_busybox() {
-    print_header "Descargando Busybox (musl estático)"
+    print_header "Downloading Busybox (musl estatico)"
     
     cd "${ROOTFS_DIR}"
     
@@ -207,7 +207,7 @@ download_busybox() {
     local busybox_url="https://busybox.net/downloads/binaries/1.35.0-x86_64-linux-musl/busybox"
     
     if ! wget -q "${busybox_url}" -O bin/busybox; then
-        # Alternativa: usar versión de AppImage
+        # Alternativa: usar version de AppImage
         print_warning "Intentando descargar desde AppImage"
         wget -q https://github.com/mirror/busybox/releases/download/1.35.0/busybox-x86_64 -O bin/busybox || {
             print_error "No se pudo descargar Busybox"
@@ -217,16 +217,16 @@ download_busybox() {
     
     chmod +x bin/busybox
     
-    # Crear enlazces simbólicos
+    # Create enlazces simbolicos
     cd bin
     ./busybox --install . > /dev/null 2>&1
     cd ..
     
-    print_success "Busybox instalado y enlaces simbólicos creados"
+    print_success "Busybox instalado y enlaces simbolicos creados"
 }
 
 download_NodeJS() {
-    print_header "Descargando NodeJS (versión musl)"
+    print_header "Downloading NodeJS (version musl)"
     
     cd "${ROOTFS_DIR}"
     
@@ -238,8 +238,8 @@ download_NodeJS() {
     # Intentamos descargar NodeJS musl
     local NodeJS_url="https://github.com/oven-sh/NodeJS/releases/download/NodeJS-v1.0.0/NodeJS-linux-x64-musl.zip"
     
-    print_warning "Descargando NodeJS desde: ${NodeJS_url}"
-    print_warning "Nota: Asegúrate de tener suficiente espacio (>100MB)"
+    print_warning "Downloading NodeJS desde: ${NodeJS_url}"
+    print_warning "Nota: Asegurate de tener suficiente espacio (>100MB)"
     
     if wget -q "${NodeJS_url}" -O /tmp/NodeJS.zip; then
         unzip -q /tmp/NodeJS.zip -d /tmp
@@ -249,33 +249,33 @@ download_NodeJS() {
             chmod +x bin/NodeJS
             print_success "NodeJS instalado"
         else
-            print_warning "Estructura de NodeJS no encontrada, intentando alternativa"
-            # Si falla, intentamos con versión glibc (puede no funcionar en alpine pero lo intentamos)
+            print_warning "Estructura de NodeJS not foundada, intentando alternativa"
+            # Si falla, intentamos con version glibc (puede no funcionar en alpine pero lo intentamos)
             return 0
         fi
     else
-        print_warning "No se pudo descargar NodeJS automáticamente"
+        print_warning "No se pudo descargar NodeJS automaticamente"
         print_warning "Descargalo manualmente de: https://github.com/oven-sh/NodeJS/releases"
-        print_warning "Y colócalo en: ${ROOTFS_DIR}/bin/NodeJS"
+        print_warning "Y colocalo en: ${ROOTFS_DIR}/bin/NodeJS"
         return 0
     fi
 }
 
 create_init_script() {
-    print_header "Creando script de inicialización (/init)"
+    print_header "Creating script de inicializacion (/init)"
     
     cat > "${ROOTFS_DIR}/init" << 'INIT_EOF'
 #!/bin/busybox sh
 
 exec 2>&1
 
-# Montar sistemas de archivos
+# Montar sistemas de files
 /bin/busybox mount -t proc proc /proc
 /bin/busybox mount -t sysfs sysfs /sys
 /bin/busybox mount -t devtmpfs devtmpfs /dev
 /bin/busybox mount -t tmpfs tmpfs /tmp
 
-# Crear dispositivos críticos
+# Create dispositivos criticos
 [ -e /dev/console ] || /bin/busybox mknod /dev/console c 5 1
 [ -e /dev/tty ] || /bin/busybox mknod /dev/tty c 5 0
 [ -e /dev/null ] || /bin/busybox mknod /dev/null c 1 3
@@ -302,28 +302,28 @@ INIT_EOF
 }
 
 create_boot_script() {
-    print_header "Creando script de boot (/boot.js)"
+    print_header "Creating script de boot (/boot.js)"
     
     cat > "${ROOTFS_DIR}/boot.js" << 'BOOT_EOF'
 #!/usr/bin/NodeJS
 
 // Boot script para PanOS
-// (No se usa en esta configuración - init lanza shell directo)
+// (No se usa en esta configuracion - init lanza shell directo)
 
 console.log("🚀 PanOS Boot");
 
 BOOT_EOF
 
     chmod +x "${ROOTFS_DIR}/boot.js"
-    print_success "Script boot.js creado (mínimo)"
+    print_success "Script boot.js creado (minimo)"
 }
 
 create_initramfs() {
-    print_header "Empaquetando RootFS en initramfs"
+    print_header "Packageando RootFS en initramfs"
     
     cd "${ROOTFS_DIR}"
     
-    # Crear CPIO
+    # Create CPIO
     find . -print0 | cpio -0 -o -H newc > "${BUILD_DIR}/initramfs.cpio" 2>/dev/null
     
     if [ ! -f "${BUILD_DIR}/initramfs.cpio" ]; then
@@ -336,7 +336,7 @@ create_initramfs() {
 }
 
 build_summary() {
-    print_header "📦 Resumen de la Construcción"
+    print_header "📦 Resumen de la Construccion"
     
     echo -e "${GREEN}Archivos generated:${NC}"
     ls -lh "${BUILD_DIR}"/
@@ -357,14 +357,14 @@ build_summary() {
 }
 
 run_qemu() {
-    print_header "🖥️  Ejecutando en QEMU"
+    print_header "🖥️  Runndo en QEMU"
     
     if [ ! -f "${BUILD_DIR}/vmlinuz" ] || [ ! -f "${BUILD_DIR}/initramfs.cpio" ]; then
-        print_error "Archivos de imagen no encontrados"
+        print_error "Archivos de imagen not foundados"
         return 1
     fi
     
-    print_warning "Iniciando máquina virtual..."
+    print_warning "Iniciando maquina virtual..."
     print_warning "Presiona Ctrl+A luego X para salir de QEMU"
     echo ""
     
@@ -389,26 +389,26 @@ show_menu() {
     echo -e "${BLUE}║        PanOS Build System        ║${NC}"
     echo -e "${BLUE}╚════════════════════════════════════════╝${NC}"
     echo ""
-    echo "1) Verificar dependencias"
+    echo "1) Check Dependencies"
     echo "2) Configurar workspace"
     echo "3) Descargar kernel"
     echo "4) Configurar kernel"
     echo "5) Compilar kernel"
-    echo "6) Crear rootfs"
-    echo "7) Instalar Busybox"
-    echo "8) Instalar NodeJS"
-    echo "9) Crear scripts de init/boot"
-    echo "10) Empaquetar initramfs"
+    echo "6) Create rootfs"
+    echo "7) Install Busybox"
+    echo "8) Install NodeJS"
+    echo "9) Create scripts de init/boot"
+    echo "10) Packagear initramfs"
     echo "11) Ver resumen"
-    echo "12) Ejecutar en QEMU"
+    echo "12) Run in QEMU"
     echo ""
-    echo "0) Ejecutar construcción COMPLETA (todos los pasos)"
+    echo "0) Runr construccion COMPLETA (todos los pasos)"
     echo "q) Salir"
     echo ""
 }
 
 full_build() {
-    print_header "🔨 Iniciando construcción COMPLETA de PanOS"
+    print_header "🔨 Iniciando construccion COMPLETA de PanOS"
     
     check_dependencies || exit 1
     setup_workspace || exit 1
@@ -443,7 +443,7 @@ main() {
     
     while true; do
         show_menu
-        read -p "Elige una opción: " choice
+        read -p "Elige una opcion: " choice
         
         case $choice in
             1) check_dependencies ;;
@@ -464,7 +464,7 @@ main() {
                 exit 0
                 ;;
             *)
-                print_error "Opción inválida"
+                print_error "Opcion invalida"
                 ;;
         esac
         
