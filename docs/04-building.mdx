@@ -1,0 +1,578 @@
+---
+title: "Building PanOS - Complete Guide"
+description: "Detailed walkthrough of the PanOS build process, component compilation, and artifact generation"
+author: "PanOS Development Team"
+version: "1.0.0"
+lastUpdated: "2024-02-16"
+difficulty: "intermediate"
+estimatedReadTime: "20 min"
+section: "Building"
+order: 4
+keywords: ["build", "compilation", "kernel", "initramfs", "artifacts", "process"]
+slug: "building"
+---
+
+# Building PanOS - Complete Guide
+
+## Overview
+
+The PanOS build process creates a bootable Linux system in 5 stages:
+
+```
+1. Kernel Download       → Get Linux 6.6.15 source
+2. Kernel Configuration  → Configure minimal kernel
+3. Kernel Compilation    → Compile kernel (longest step)
+4. Rootfs Creation       → Create filesystem with Busybox + Node.js
+5. Initramfs Packaging   → Pack everything into bootable image
+```
+
+Total time: **20-30 minutes** on modern hardware.
+
+## Prerequisites
+
+Before building, ensure:
+
+- ✅ Dependencies installed (`./0-install-deps.sh` completed)
+- ✅ 30+ GB free disk space
+- ✅ 4+ GB free RAM
+- ✅ Stable internet connection
+- ✅ You are in the PanOS project directory
+
+Validation:
+
+```bash
+./3-check.sh     # Shows current build status
+```
+
+## Starting the Build
+
+### Method 1: Standard Build (Recommended)
+
+```bash
+./1-build.sh
+```
+
+This starts the complete build process with status output.
+
+### Method 2: Quick Start Script
+
+```bash
+./quickstart.sh
+```
+
+Convenience wrapper that runs `1-build.sh` in automatic mode.
+
+### Method 3: From Makefile
+
+```bash
+make auto          # Runs ./1-build.sh --auto
+# or
+make rebuild       # Clean and rebuild everything
+```
+
+## Build Process - Detailed Breakdown
+
+### Stage 1: Preparation
+
+**What happens**:
+- Creates build directories
+- Clears previous build artifacts
+- Sets up workspace structure
+
+**Time**: < 1 minute
+
+**Output**:
+```
+[1/5] Cleaning previous build...
+✓ Build workspace prepared
+```
+
+**Directory structure created**:
+```
+~/pan-os-iso/
+├── build/           # Final artifacts
+├── kernel-src/      # Linux kernel source
+└── rootfs/          # Root filesystem
+```
+
+### Stage 2: Kernel Download
+
+**What happens**:
+- Downloads Linux 6.6.15 source code (~128 MB)
+- Extracts tar.xz archive
+- Verifies integrity
+
+**Time**: 2-5 minutes (depends on internet speed)
+
+**Output**:
+```
+[2a/5] Downloading Linux 6.6.15...
+  Fetching linux-6.6.15.tar.xz (128 MB)...
+  [████████████████████] 100%
+
+[2b/5] Extracting kernel...
+  Extracting tar archive...
+✓ Kernel source extracted
+```
+
+**What was downloaded**:
+```
+~/pan-os-iso/kernel-src/linux-6.6.15/
+├── arch/              # Architecture-specific code
+├── drivers/           # Device drivers
+├── kernel/            # Core kernel
+├── fs/                # Filesystems
+├── net/               # Networking
+└── Makefile           # Build configuration
+```
+
+### Stage 3: Kernel Configuration
+
+**What happens**:
+- Runs `make allnoconfig` (minimal base configuration)
+- Applies custom `.config` with only needed features
+- Validates configuration
+
+**Time**: 1-2 minutes
+
+**Configuration includes**:
+
+```
+✓ CPU architecture (x86_64)
+✓ Serial console (for QEMU debugging)
+✓ Filesystem support (ext4)
+✓ Virtualization (VIRTIO for QEMU)
+✓ Networking (TCP/IP, DHCP)
+✓ Storage (AHCI, virtio-blk)
+✓ Process management
+✓ Module loading (initramfs)
+```
+
+**Configuration excludes**:
+```
+✗ Unnecessary drivers
+✗ GUI frameworks
+✗ Multimedia codecs
+✗ Most hardware-specific features
+```
+
+**Output**:
+```
+[3/5] Configuring kernel...
+  make allnoconfig...
+  Applying PanOS configuration...
+  make oldconfig...
+✓ Kernel configured (tinyconfig mode)
+```
+
+### Stage 4: Kernel Compilation
+
+**What happens**:
+- Compiles kernel using all available CPU cores
+- Compiles built-in device drivers
+- Generates final `vmlinuz` (compressed kernel image)
+
+**Time**: 10-20 minutes (longest stage)
+
+This is where most build time goes. Factors affecting duration:
+
+| Factor | Impact | Duration |
+|--------|--------|----------|
+| **CPU cores** | More cores = faster | 4 cores: 20 min, 8 cores: 12 min |
+| **Disk speed** | SSD much faster | SSD: 10 min, HDD: 25 min |
+| **System load** | Heavy load slows compilation | Light use: optimal time |
+| **RAM speed** | Affects link time | Modern RAM: faster |
+
+**Output** (live updates):
+```
+[4/5] Compiling kernel...
+  CC      kernel/sys.o
+  CC      kernel/signal.o
+  CC      fs/ext4/inode.o
+  LD      vmlinux
+  OBJCOPY arch/x86/boot/vmlinuz
+  
+  Kernel compilation finished!
+  vmlinuz: 3.3 MB
+  
+✓ Kernel compiled successfully
+```
+
+**What was created**:
+```
+~/pan-os-iso/build/vmlinuz           # 3.3 MB - bootable kernel
+~/pan-os-iso/kernel-src/linux-6.6.15/
+├── arch/x86/boot/vmlinuz            # Same file as above
+├── .config                          # Configuration used
+└── System.map                       # Symbol table
+```
+
+### Stage 5: Rootfs Creation
+
+**What happens**:
+- Downloads Busybox static binary
+- Extracts and installs Unix tools (ls, cat, grep, etc.)
+- Creates directory structure
+- Generates init script
+
+**Time**: 2-3 minutes
+
+**Output**:
+```
+[5a/5] Creating rootfs...
+  Downloading busybox...
+  Creating directories...
+  Installing busybox symlinks...
+  
+✓ Busybox installed
+  Available commands: ls, cat, cp, grep, awk, sed, vi, ...
+```
+
+**Rootfs structure**:
+```
+~/pan-os-iso/rootfs/
+├── bin/              # Executable binaries
+│   ├── busybox       # Main binary (all tools linked to this)
+│   ├── sh -> busybox # Shell (symlink)
+│   ├── ls -> busybox # List files (symlink)
+│   └── ... (300+ symlinks)
+├── sbin/             # System binaries
+├── lib/              # System libraries
+├── proc/             # Process information mount point
+├── sys/              # System information mount point
+├── tmp/              # Temporary files
+├── root/             # Root home directory
+└── init              # Boot script
+```
+
+### Stage 6: Node.js Integration
+
+**What happens**:
+- Downloads Node.js v24.0.0 compiled binary (~50 MB)
+- Extracts to rootfs
+- Installs npm package manager
+- Creates JavaScript boot environment
+
+**Time**: 2-3 minutes
+
+**Output**:
+```
+[5b/5] Installing Node.js...
+  Downloading Node.js v24.0.0...
+  [████████████████████] 100%
+  
+  Extracting Node.js (50 MB)...
+  Installing npm...
+  
+✓ Node.js v24.0.0 installed
+✓ npm v10.x.x installed
+```
+
+**What was installed**:
+```
+~/pan-os-iso/rootfs/
+├── bin/
+│   ├── node         # Node.js runtime
+│   ├── npm          # Package manager
+│   ├── npx          # NPM executor
+│   └── ... (busybox tools)
+├── lib/
+│   ├── node_modules/    # Node built-in modules
+│   └── ... (shared libraries)
+└── boot.js          # Startup script
+```
+
+### Stage 7: Initramfs Creation
+
+**What happens**:
+- Packages entire rootfs into CPIO archive
+- Compresses with gzip
+- Creates bootable initramfs image
+
+**Time**: 2-3 minutes
+
+**Output**:
+```
+[6/5] Creating initramfs...
+  Packing rootfs into CPIO archive...
+  Compressing with gzip...
+  
+  initramfs.cpio: 142 MB
+  
+✓ Initramfs created successfully
+```
+
+**What was created**:
+```
+~/pan-os-iso/build/initramfs.cpio       # 142 MB - root filesystem
+```
+
+This is the complete filesystem with:
+- Linux shell (Busybox)
+- 300+ Unix commands
+- Node.js runtime
+- npm package manager
+- All required libraries
+
+### Stage 8: ISO Creation (Optional)
+
+**What happens**:
+- Creates GRUB bootloader configuration
+- Packages kernel + initramfs into ISO format
+- Makes bootable with `grub-mkrescue` or `xorrisofs`
+
+**Time**: 2-3 minutes
+
+**Output**:
+```
+[7/5] Creating bootable ISO...
+  Preparing GRUB structure...
+  Running grub-mkrescue...
+  
+  pan-os-booteable.iso: 156 MB
+  
+✓ ISO created successfully
+```
+
+**What was created**:
+```
+~/pan-os-iso/build/pan-os-booteable.iso  # 156 MB - bootable ISO
+```
+
+This can be booted on:
+- QEMU emulator
+- Physical hardware (after burning to USB)
+- VirtualBox, VMware, Hyper-V
+- Any system with BIOS boot capability
+
+## Build Artifacts
+
+After successful build, you have:
+
+```
+~/pan-os-iso/build/
+├── vmlinuz                      # 3.3 MB
+│   └── Linux kernel, compiled for x86_64
+│
+├── initramfs.cpio               # 142 MB
+│   └── Complete filesystem with Busybox + Node.js
+│
+└── pan-os-booteable.iso         # 156 MB
+    └── Bootable ISO with GRUB bootloader
+```
+
+**Total size**: ~300 MB (compressed to ~156 MB in ISO)
+
+### Artifact Details
+
+| Artifact | Purpose | Size | Format |
+|----------|---------|------|--------|
+| **vmlinuz** | Linux kernel | 3.3 MB | Compressed ELF executable |
+| **initramfs.cpio** | Root filesystem | 142 MB | CPIO+gzip archive |
+| **ISO** | Bootable media | 156 MB | ISO 9660 with GRUB |
+
+## Build Configuration
+
+You can customize the build by editing `1-build.sh`:
+
+### Kernel Version
+
+Change kernel version:
+
+```bash
+# In 1-build.sh, line 8
+KERNEL_VERSION="6.6.15"    # Change to other version
+```
+
+Supported versions:
+- 6.6.15 (tested and default)
+- 6.5.x (should work)
+- 5.15.x (LTS, very stable)
+
+### Custom Configuration
+
+Modify kernel features in `.config` section:
+
+```bash
+# Add/remove kernel options
+CONFIG_SERIAL_8250=y              # Serial console
+CONFIG_VIRTIO_NET=y               # Virtual networking
+CONFIG_EXT4_FS=y                  # EXT4 filesystem
+```
+
+### Node.js Version
+
+Change Node.js version:
+
+```bash
+# In 1-build.sh, around line 200
+NODEJS_VERSION="24.0.0"    # Change to other version
+```
+
+Check available versions at: https://nodejs.org/dist/
+
+### Custom Init Script
+
+Modify rootfs initialization:
+
+```bash
+# In 1-build.sh, locate create_init_script()
+# Edit the boot sequence here
+```
+
+## Monitoring Build Progress
+
+### Watch Real-Time Output
+
+The build script shows live progress with colored output:
+
+```
+🔵 BLUE   = Section headers
+🟢 GREEN  = Success messages
+🟡 YELLOW = In-progress messages
+🔴 RED    = Errors (if any)
+```
+
+### Check Build Status Mid-Build
+
+In another terminal:
+
+```bash
+watch -n 2 "du -sh ~/pan-os-iso/"
+```
+
+Shows workspace size growing in real-time.
+
+### Monitor System Resources
+
+```bash
+# In another terminal
+htop
+```
+
+Shows CPU, RAM, and disk usage during build.
+
+## Troubleshooting Build Issues
+
+### Build fails at kernel compilation
+
+**Symptom**: 
+```
+Error: ... recipe for target 'vmlinuz' failed
+```
+
+**Solution**:
+```bash
+# Clean and retry
+rm -rf ~/pan-os-iso/kernel-src
+./1-build.sh    # Restart from beginning
+```
+
+### Out of disk space error
+
+**Symptom**:
+```
+No space left on device
+```
+
+**Solution**:
+```bash
+# Free up space (minimum 30 GB needed)
+df -h /
+
+# Delete large files or use external drive
+# Then retry
+./1-build.sh
+```
+
+### Download fails (network timeout)
+
+**Symptom**:
+```
+wget: unable to resolve host address
+```
+
+**Solution**:
+```bash
+# Check internet connection
+ping -c 3 google.com
+
+# Retry build (partially downloaded files are kept)
+./1-build.sh
+```
+
+### Build takes too long (seems stuck)
+
+**Check if still compiling**:
+```bash
+# In another terminal
+ps aux | grep make
+```
+
+If `make` is running, kernel compilation is active. Wait - it can take 20-30 minutes.
+
+If not running, something failed. Check logs and restart.
+
+### Compile error: "missing header files"
+
+**Symptom**:
+```
+fatal error: elf.h: No such file or directory
+```
+
+**Solution**:
+Install missing headers:
+
+```bash
+sudo apt-get install -y libelf-dev libssl-dev
+./1-build.sh
+```
+
+## Build Success Indicators
+
+After completing successfully, you should see:
+
+```
+════════════════════════════════════════════════════════
+✅ BUILD COMPLETED SUCCESSFULLY
+════════════════════════════════════════════════════════
+
+Artifacts created:
+  ✓ vmlinuz (3.3 MB)
+  ✓ initramfs.cpio (142 MB)
+  ✓ pan-os-booteable.iso (156 MB)
+
+Ready to run:
+  ./2-run.sh          # Launch QEMU
+  ./3-check.sh        # Validate build
+  ./4-create-iso.sh   # Recreate ISO
+```
+
+Verify build:
+
+```bash
+./3-check.sh
+```
+
+Expected output:
+
+```
+✅ Kernel (vmlinuz) ............ 3.3M
+✅ Initramfs ................... 142M
+✅ Node.js integrated       
+✅ npm integrated
+✅ Bootable ISO ............... 156M
+```
+
+## Next Steps
+
+Build complete! You can now:
+
+1. **Run PanOS** → `./2-run.sh` or see [05-running.mdx](./05-running.mdx)
+2. **Understand Architecture** → Read [06-architecture.mdx](./06-architecture.mdx)
+3. **Create Bootable Media** → Read [09-creating-iso.mdx](./09-creating-iso.mdx)
+
+---
+
+**Previous**: [03-installation.mdx](./03-installation.mdx)  
+**Next**: [05-running.mdx](./05-running.mdx)

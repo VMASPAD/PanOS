@@ -1,0 +1,376 @@
+---
+title: "Installation and Setup"
+description: "Step-by-step guide to install dependencies and configure the build environment"
+author: "PanOS Development Team"
+version: "1.0.0"
+lastUpdated: "2024-02-16"
+difficulty: "beginner"
+estimatedReadTime: "12 min"
+section: "Setup"
+order: 3
+keywords: ["installation", "setup", "dependencies", "environment", "configuration"]
+slug: "installation"
+---
+
+# Installation and Setup
+
+## Pre-Installation Check
+
+Before proceeding, verify your system meets requirements:
+
+```bash
+# Check OS is Linux
+uname -s                    # Should output: Linux
+
+# Check free space
+df -h /                     # Need 30+ GB free
+
+# Check RAM
+free -h                     # Need 4+ GB available
+
+# Check internet
+ping -c 1 google.com        # Should succeed
+```
+
+If any check fails, review [02-prerequisites.mdx](./02-prerequisites.mdx).
+
+## Step 1: Navigate to Project Directory
+
+```bash
+# Navigate to PanOS project
+cd ~/Desktop/Atlas/PanOS
+
+# Verify you're in the right place
+ls -la 0-install-deps.sh 1-build.sh 2-run.sh 3-check.sh
+```
+
+You should see all scripts listed.
+
+## Step 2: Make Scripts Executable
+
+Ensure all build scripts are executable:
+
+```bash
+chmod +x 0-install-deps.sh
+chmod +x 1-build.sh
+chmod +x 2-run.sh
+chmod +x 3-check.sh
+chmod +x 4-create-iso.sh
+chmod +x quickstart.sh
+```
+
+Verify:
+
+```bash
+ls -la *.sh | head
+```
+
+All `.sh` files should have `x` in permissions (e.g., `-rwxr-xr-x`).
+
+## Step 3: Run Dependency Installation
+
+This is the main installation step:
+
+```bash
+./0-install-deps.sh
+```
+
+### What This Script Does
+
+1. **Checks OS Compatibility**
+   - Verifies system is Ubuntu/Debian-based
+   - Exits if not supported
+
+2. **Updates Package Lists**
+   - Runs `sudo apt-get update`
+   - Ensures latest package information
+
+3. **Installs Build Essentials**
+   - gcc, make, g++, and related tools
+
+4. **Installs Kernel Build Tools**
+   - bc, bison, flex
+   - libelf-dev, libssl-dev
+
+5. **Installs QEMU Emulator**
+   - qemu-system-x86
+
+6. **Installs ISO Tools**
+   - grub-common, xorriso
+
+7. **Installs Utilities**
+   - wget, xz-utils, cpio
+
+### Expected Output
+
+```
+═══════════════════════════════════════════════════════
+  PanOS - Install Dependencies
+═══════════════════════════════════════════════════════
+
+Checking system...
+✓ System is Linux (Ubuntu 22.04)
+✓ Free space: 350GB available
+
+Installing packages...
+Reading package lists... Done
+Building dependency tree... Done
+```
+
+The installation will take **5-15 minutes** depending on:
+- Internet speed (need to download ~500 MB)
+- Disk speed (SSD faster than HDD)
+- System load (background processes slow it down)
+
+### Monitor Installation Progress
+
+Watch the output. It shows each package being installed:
+
+```
+Setting up build-essential (12.9-1ubuntu1) ...
+Setting up bc (1.07.1-2-1ubuntu1) ...
+Setting up libssl-dev (3.0.2-0ubuntu1.7) ...
+...
+```
+
+Do not interrupt the process. If interrupted, you can safely re-run the script.
+
+## Step 4: Verify Installation
+
+After the script completes, verify all components installed:
+
+```bash
+# Test each tool
+gcc --version              # GNU C Compiler
+make --version             # Make
+bc --version               # Calculator
+bison --version            # Parser
+flex --version             # Lexical analyzer
+qemu-system-x86_64 --version  # QEMU emulator
+which grub-mkrescue        # GRUB tool
+which xorrisofs            # ISO creator
+```
+
+All commands should return version information without errors.
+
+## Step 5: Create Build Workspace
+
+The build process will create these directories:
+
+```bash
+# These are auto-created by build scripts
+mkdir -p ~/pan-os-iso/build
+mkdir -p ~/pan-os-iso/kernel-src
+mkdir -p ~/pan-os-iso/rootfs
+```
+
+You can do this manually or let the build scripts create them.
+
+Verify directory is writable:
+
+```bash
+touch ~/pan-os-iso/build/test.txt && rm ~/pan-os-iso/build/test.txt
+echo "✓ Build directory is writable"
+```
+
+## Step 6: Prepare for Build
+
+Before starting the build, ensure:
+
+1. **30+ GB Free Disk Space**
+   ```bash
+   df -h ~/pan-os-iso/
+   ```
+
+2. **4+ GB Free RAM**
+   ```bash
+   free -h
+   ```
+
+3. **Stable Internet Connection**
+   ```bash
+   ping -c 3 google.com
+   ```
+
+4. **No Other Heavy Tasks**
+   - Close resource-intensive applications
+   - Avoid large file transfers during build
+
+5. **Machine Won't Sleep**
+   - Prevent sleep/hibernation (could interrupt build)
+   - Consider: `xset s off` on many Linux systems
+
+## Step 7: Verify Build Scripts
+
+Examine the main build script to understand what will happen:
+
+```bash
+# View script header (first 50 lines)
+head -50 1-build.sh
+```
+
+You should see:
+- Build configuration (versions, paths)
+- Color definitions for output
+- Comments explaining each section
+- Error handling with `set -e`
+
+## Installation Summary
+
+You now have:
+
+```
+✅ Build tools (gcc, make, bison, flex)
+✅ Linux kernel development headers
+✅ QEMU emulator
+✅ Bootloader utilities (GRUB)
+✅ ISO creation tools (xorrisofs)
+✅ Download/extraction tools (wget, cpio)
+✅ Build workspace created
+```
+
+## Common Installation Issues
+
+### Issue: "sudo: 1-install-deps.sh: command not found"
+
+**Solution**: Script needs to be in current directory:
+
+```bash
+cd ~/Desktop/Atlas/PanOS
+./0-install-deps.sh  # Note the ./ prefix
+```
+
+### Issue: "Permission denied"
+
+**Solution**: Make script executable:
+
+```bash
+chmod +x 0-install-deps.sh
+./0-install-deps.sh
+```
+
+### Issue: Package installation fails with "E: Unable to acquire the dpkg frontend lock"
+
+**Solution**: Another apt process is running:
+
+```bash
+# Wait for other processes to finish
+sudo lsof /var/lib/apt/lists/lock
+
+# Or wait and retry
+sleep 60
+./0-install-deps.sh
+```
+
+### Issue: "Reading package lists... Done" then hangs
+
+**Solution**: Update package lists first:
+
+```bash
+sudo apt-get update
+./0-install-deps.sh
+```
+
+### Issue: "E: Package 'qemu-system-x86' has no installation candidate"
+
+**Solution**: Ubuntu package name might differ:
+
+```bash
+sudo apt-get install -y qemu-system-x86-64
+# Or
+sudo apt-get install -y qemu-system
+```
+
+### Issue: Some packages fail but script continues
+
+**Solution**: Manually install missing package:
+
+```bash
+# Identify failing package from output
+sudo apt-get install -y <package-name>
+
+# Re-run script
+./0-install-deps.sh
+```
+
+## Post-Installation Checks
+
+Create a verification script to test everything:
+
+```bash
+cat > verify-install.sh << 'EOF'
+#!/bin/bash
+echo "PanOS Installation Verification"
+echo "================================"
+
+tools=(
+  "gcc:GNU C Compiler"
+  "make:Make build system"
+  "bc:Calculator"
+  "bison:Parser generator"
+  "flex:Lexical analyzer"
+  "qemu-system-x86_64:QEMU emulator"
+  "grub-mkrescue:GRUB utility"
+  "xorrisofs:ISO creator"
+)
+
+for tool in "${tools[@]}"; do
+  IFS=':' read -r cmd name <<< "$tool"
+  if command -v "$cmd" &> /dev/null; then
+    echo "✓ $name"
+  else
+    echo "✗ $name MISSING"
+  fi
+done
+EOF
+
+chmod +x verify-install.sh
+./verify-install.sh
+```
+
+Expected output:
+
+```
+PanOS Installation Verification
+================================
+✓ GNU C Compiler
+✓ Make build system
+✓ Calculator
+✓ Parser generator
+✓ Lexical analyzer
+✓ QEMU emulator
+✓ GRUB utility
+✓ ISO creator
+```
+
+## Next Steps
+
+Installation complete! You're ready to build:
+
+1. **Start Building**: Run `./1-build.sh` (takes 20-30 minutes)
+   ```bash
+   ./1-build.sh
+   ```
+
+2. **Understand Build Process**: Read [04-building.mdx](./04-building.mdx)
+
+3. **Learn Architecture**: Read [06-architecture.mdx](./06-architecture.mdx)
+
+## Configuration Options
+
+You can customize the build by editing environment variables before running `1-build.sh`:
+
+```bash
+# Use different workspace
+export WORKSPACE="/custom/path"
+
+# Or run build script with explicit vars
+WORKSPACE=/tmp ./1-build.sh
+```
+
+See [04-building.mdx](./04-building.mdx) for build customization options.
+
+---
+
+**Previous**: [02-prerequisites.mdx](./02-prerequisites.mdx)  
+**Next**: [04-building.mdx](./04-building.mdx)

@@ -1,0 +1,605 @@
+---
+title: "Troubleshooting and Common Issues"
+description: "Complete guide to diagnosing and resolving common PanOS build, boot, and runtime issues"
+author: "PanOS Development Team"
+version: "1.0.0"
+lastUpdated: "2024-02-16"
+difficulty: "intermediate"
+estimatedReadTime: "20 min"
+section: "Support"
+order: 8
+keywords: ["troubleshooting", "debugging", "errors", "issues", "solutions"]
+slug: "troubleshooting"
+---
+
+# Troubleshooting and Common Issues
+
+## Quick Diagnostic Check
+
+Before troubleshooting, run the diagnostic script:
+
+```bash
+./3-check.sh
+```
+
+This validates your build and shows what's present/missing:
+
+```
+✅ Kernel (vmlinuz) ............ 3.3M
+✅ Initramfs ................... 142M
+✅ Node.js integrated
+✅ npm integrated
+✅ Bootable ISO ............... 156M
+
+✓ System ready to use
+```
+
+## Build Issues
+
+### Issue: "No space left on device"
+
+**Error Message**:
+```
+make[4]: *** delete target 'fs/ext4/inode.o' – No space left on device
+```
+
+**Cause**: Insufficient disk space for kernel compilation
+
+**Solution**:
+
+1. Check available space:
+   ```bash
+   df -h /
+   ```
+
+2. Need 30+ GB free. If not enough:
+   ```bash
+   # List large files
+   du -sh /* | sort -h
+   
+   # Remove cache
+   sudo apt-get clean
+   
+   # Remove old build (if exists)
+   rm -rf ~/pan-os-iso
+   ```
+
+3. Retry build:
+   ```bash
+   ./1-build.sh
+   ```
+
+### Issue: Build never completes ("stuck")
+
+**Symptom**: Script runs but doesn't progress for 10+ minutes
+
+**Likely Cause**: Kernel compilation in progress (normal - can take 20-30 minutes)
+
+**Verify**:
+```bash
+# In another terminal
+ps aux | grep make
+
+# If you see "make -j8" it's compiling (normal)
+```
+
+**Solution**: Wait. Kernel compilation is slow. Factors affecting speed:
+
+| Factor | Impact |
+|--------|--------|
+| CPU cores | 2 cores: 30 min, 8 cores: 12 min |
+| Disk type | SSD: 15 min, HDD: 30+ min |
+| System load | High load: slower |
+| RAM | More RAM = faster compilation |
+
+To speed up:
+- Close unnecessary applications
+- Use SSD if available
+- Ensure good cooling
+- Consider higher RAM allocation
+
+### Issue: Kernel compilation fails with errors
+
+**Error Message** (example):
+```
+ERROR: modpost: "do_something" undefined!
+Link failed with ERROR
+```
+
+**Causes**:
+- Corrupted source code
+- Missing dependencies
+- Interrupted download
+
+**Solutions**:
+
+1. Clean and retry:
+   ```bash
+   rm -rf ~/pan-os-iso/kernel-src/linux-6.6.15
+   ./1-build.sh
+   ```
+
+2. Check internet connection:
+   ```bash
+   ping -c 3 google.com
+   ```
+
+3. Verify dependencies:
+   ```bash
+   ./0-install-deps.sh
+   ```
+
+### Issue: "make: bison: command not found"
+
+**Cause**: Required tools not installed
+
+**Solution**:
+```bash
+./0-install-deps.sh
+```
+
+Then retry build.
+
+### Issue: Memory issues during build
+
+**Error**:
+```
+Virtual memory exhausted
+```
+
+**Cause**: Insufficient RAM
+
+**Solutions**:
+
+1. Close other applications:
+   ```bash
+   htop
+   # Close heavy processes (Chrome, Docker, VMs)
+   ```
+
+2. Increase swap (if needed):
+   ```bash
+   sudo fallocate -l 10G /swapfile
+   sudo dd if=/dev/zero of=/swapfile bs=1M count=10000
+   sudo chmod 600 /swapfile
+   sudo mkswap /swapfile
+   sudo swapon /swapfile
+   ```
+
+### Issue: Download fails (network timeout)
+
+**Error**:
+```
+wget: read error (Connection reset by peer)
+```
+
+**Causes**:
+- Unstable internet
+- Server temporarily down
+- Network path issue
+
+**Solutions**:
+
+1. Wait and retry:
+   ```bash
+   sleep 60
+   ./1-build.sh  # Resumes from where it stopped
+   ```
+
+2. Check internet:
+   ```bash
+   ping -c 5 google.com
+   traceroute kernel.org
+   ```
+
+3. Try alternative mirror:
+   - Edit `1-build.sh`
+   - Change kernel URL to different mirror
+   - Retry
+
+## Boot Issues
+
+### Issue: Build completes but boot fails
+
+**Symptom**: `./3-check.sh` shows ✅ but `./2-run.sh` doesn't work
+
+**Causes**:
+- QEMU not installed
+- Corrupted build artifacts
+- Permission issues
+
+**Solutions**:
+
+1. Verify QEMU:
+   ```bash
+   which qemu-system-x86_64
+   qemu-system-x86_64 --version
+   ```
+
+2. If not found, install:
+   ```bash
+   sudo apt-get install -y qemu-system-x86
+   ```
+
+3. Verify build artifacts:
+   ```bash
+   ls -lh ~/pan-os-iso/build/
+   ```
+
+4. Rebuild if needed:
+   ```bash
+   ./1-build.sh
+   ```
+
+### Issue: QEMU window closes immediately
+
+**Symptom**:
+```
+qemu-system-x86_64: aborting due to ERROR: unrecognized 'machine' type 'q35'
+```
+
+**Cause**: QEMU configuration issue or old version
+
+**Solution**:
+
+1. Check QEMU version:
+   ```bash
+   qemu-system-x86_64 --version
+   # Should be 5.0+
+   ```
+
+2. Update QEMU:
+   ```bash
+   sudo apt-get install --only-upgrade qemu-system-x86
+   ```
+
+3. Try manual boot command:
+   ```bash
+   qemu-system-x86_64 \
+     -kernel ~/pan-os-iso/build/vmlinuz \
+     -initrd ~/pan-os-iso/build/initramfs.cpio \
+     -nographic \
+     -append "console=ttyS0"
+   ```
+
+### Issue: Boot hangs at "Freeing" phase
+
+**Symptom**:
+```
+[    0.600000] Freeing SMP alternatives memory: 28K
+[    STUCK]
+```
+
+**Causes**:
+- Very slow disk/system
+- Kernel mismatch
+
+**Wait**: Kernel initialization can take 5-10 seconds on slow systems.
+
+**If > 30 seconds**, force exit (`Ctrl+C`) and retry.
+
+### Issue: "I/O error" messages at boot
+
+**Error**:
+```
+[ERROR] I/O error, dev ram0, sector 0
+```
+
+**Causes**:
+- Corrupted initramfs
+- Memory issues
+
+**Solutions**:
+
+1. Check initramfs integrity:
+   ```bash
+   file ~/pan-os-iso/build/initramfs.cpio
+   # Should show: gzip compressed data
+   ```
+
+2. Rebuild initramfs:
+   ```bash
+   ./1-build.sh
+   ```
+
+3. Increase RAM:
+   ```bash
+   ./2-run.sh  # Choose option 3 (4 GB)
+   ```
+
+## Runtime Issues
+
+### Issue: Shell prompt takes 30+ seconds to appear
+
+**Causes**:
+- System under heavy load
+- Slow disk
+- Initialization script taking time
+
+**Solutions**:
+
+1. Close other applications
+2. Wait - first boot can be slower
+3. Subsequent boots are faster (cached)
+
+### Issue: Node.js command hangs
+
+**Error**:
+```
+node test.js
+[no output for 10+ seconds]
+```
+
+**Causes**:
+- Script running but slow
+- Program waiting for input
+- Permission issues
+
+**Check**:
+```bash
+# In another terminal
+ps aux | grep node
+
+# If you see it, it's running - wait or check code
+```
+
+### Issue: "command not found"
+
+**Error**:
+```
+/ # npm install express
+sh: npm: command not found
+```
+
+**Cause**: npm not in PATH
+
+**Solution**:
+```bash
+# npm should be in /bin/npm
+/ # /bin/npm install express
+
+# Or check PATH
+/ # echo $PATH
+/bin:/sbin:/usr/bin:/usr/sbin
+
+# npm location
+/ # which npm
+/bin/npm
+```
+
+If npm is missing, rebuild:
+
+```bash
+./1-build.sh
+```
+
+### Issue: npm install fails
+
+**Error** (example):
+```
+npm ERR! EACCES: permission denied, access '/root/.npm'
+```
+
+**Solution**:
+```bash
+# Grant permissions
+chmod -R 755 /root/.npm
+
+# Or use npm ci 
+npm ci
+```
+
+### Issue: Disk full error in PanOS
+
+**Error**:
+```
+sh: cannot create temp file for here-document: No space left on device
+```
+
+**Cause**: Rootfs is RAM-backed and allocation is full
+
+**Solution**:
+
+1. Check space used:
+   ```bash
+   / # df -h
+   tmpfs                     922.0M    800M    122M  87% /
+   ```
+
+2. Free space:
+   ```bash
+   / # rm -rf /tmp/*
+   / # rm unnecessary files
+   ```
+
+3. Restart with more RAM:
+   ```bash
+   exit  # Exit PanOS
+   ./2-run.sh  # Choose 4 GB option
+   ```
+
+### Issue: Network not working in PanOS
+
+**Symptom**:
+```bash
+/ # ping 8.8.8.8
+ping: bad address '8.8.8.8'
+```
+
+**Causes**:
+- Network interface down
+- No DHCP configuration
+
+**Solutions**:
+
+1. Check interface:
+   ```bash
+   / # ip link show
+   1: lo: <LOOPBACK,UP> ...
+   2: eth0: <BROADCAST,MULTICAST> ...  # DOWN?
+   ```
+
+2. Bring up interface:
+   ```bash
+   / # ip link set eth0 up
+   / # dhclient eth0
+   ```
+
+3. Check DNS:
+   ```bash
+   / # cat /etc/resolv.conf
+   nameserver 10.0.2.3  # Should see this
+   ```
+
+4. Try direct IP:
+   ```bash
+   / # ping -c 3 1.1.1.1
+   ```
+
+### Issue: Cannot access files from host
+
+**Problem**: Want to share files between host and PanOS
+
+**Solution**: PanOS runs from RAM, changes lost on exit.
+
+**Options**:
+
+1. **Copy files before booting**:
+   Edit rootfs before building
+
+2. **Use network**:
+   ```bash
+   # Inside PanOS
+   / # wget http://host-ip:8000/file.txt
+   ```
+
+3. **Increase committed changes**:
+   Modify init script to mount real disk
+
+See [10-advanced.mdx](./10-advanced.mdx) for persistent storage options.
+
+## Performance Issues
+
+### Issue: Everything is slow
+
+**Causes**:
+- Insufficient RAM allocated
+- System overloaded
+- Slow disk
+
+**Solutions**:
+
+1. Allocate more RAM:
+   ```bash
+   ./2-run.sh  # Choose 4 GB
+   ```
+
+2. Check system load:
+   ```bash
+   / # uptime
+   load average: 0.5, 0.3, 0.1  # Healthy
+   
+   load average: 8.5, 7.3, 5.1   # Overloaded
+   ```
+
+3. Use SSD host machine if possible
+
+### Issue: npm install takes very long
+
+**Reason**: Network or disk speed
+
+**Solutions**:
+
+1. Use npm cache:
+   ```bash
+   / # npm ci  # Faster than npm install
+   ```
+
+2. Check network:
+   ```bash
+   / # ping -c 10 registry.npmjs.org
+   # Look for packet loss
+   ```
+
+3. Increase RAM:
+   ```bash
+   ./2-run.sh  # Choose 4 GB
+   ```
+
+## Debugging Techniques
+
+### Enable Verbose Output
+
+```bash
+# Boot with verbose kernel messages
+./2-run.sh
+
+# Inside QEMU, before it loads kernel, 
+# if using direct kernel method (./2-run.sh):
+# Already shows all output
+```
+
+### Check Logs
+
+```bash
+# Kernel messages
+/ # dmesg | tail -20
+
+# Recent errors
+/ # dmesg | grep -i error
+```
+
+### Validate Build
+
+```bash
+# Comprehensive check
+./3-check.sh
+
+# Check individual components
+file ~/pan-os-iso/build/vmlinuz
+file ~/pan-os-iso/build/initramfs.cpio
+cpio -t < ~/pan-os-iso/build/initramfs.cpio | head -20
+```
+
+### Inspect Initramfs
+
+```bash
+# Extract initramfs for inspection
+cd /tmp
+mkdir panos-extract
+cd panos-extract
+cpio -id < ~/pan-os-iso/build/initramfs.cpio
+ls -la  # See what's inside
+```
+
+## Getting Help
+
+If you're still having issues:
+
+1. **Check Documentation**: Read all docs in `./docs/`
+2. **Check `Roadmap.md`**: Know limitations and future plans
+3. **Review Scripts**: examine `1-build.sh`, `2-run.sh`
+4. **Check GitHub Issues**: Search similar problems
+5. **Test Minimal Case**: Try simple commands first
+
+Example minimal test:
+
+```bash
+./1-build.sh   # Full build
+./2-run.sh     # Boot with 2GB RAM
+/ # node --version
+v24.0.0
+```
+
+If above works but your code doesn't, issue is with your Node.js code, not PanOS.
+
+## Next Steps
+
+- **Create Bootable Media**: Read [09-creating-iso.mdx](./09-creating-iso.mdx)
+- **Advanced Customization**: Read [10-advanced.mdx](./10-advanced.mdx)
+- **Learn Architecture Details**: Read [06-architecture.mdx](./06-architecture.mdx)
+
+---
+
+**Previous**: [07-nodejs-integration.mdx](./07-nodejs-integration.mdx)  
+**Next**: [09-creating-iso.mdx](./09-creating-iso.mdx)

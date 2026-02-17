@@ -1,0 +1,456 @@
+---
+title: "Creating Bootable Media and Installation"
+description: "Guide to creating bootable ISO, USB drives, and installing PanOS on physical hardware"
+author: "PanOS Development Team"
+version: "1.0.0"
+lastUpdated: "2024-02-16"
+difficulty: "intermediate"
+estimatedReadTime: "18 min"
+section: "Deployment"
+order: 9
+keywords: ["iso", "bootable", "usb", "installation", "deployment", "hardware"]
+slug: "creating-iso"
+---
+
+# Creating Bootable Media and Installation
+
+## Understanding ISO Creation
+
+After building PanOS, you have `initramfs.cpio` and `vmlinuz`. To make it bootable on physical hardware, you need a **bootable ISO** file.
+
+### What is ISO 9660?
+
+ISO 9660 is a filesystem standard for optical media (DVDs/CDs) and USB drives. It includes:
+
+- **Kernel file** (vmlinuz)
+- **Initramfs** (initramfs.cpio)
+- **Bootloader** (GRUB)
+- **Bootloader config** (grub.cfg)
+
+## Creating the ISO
+
+### Quick Method
+
+```bash
+./4-create-iso.sh
+```
+
+This creates `pan-os-booteable.iso` (~156 MB) in `~/pan-os-iso/build/`.
+
+### What the Script Does
+
+```bash
+[1/3] Preparing estructura...
+  Creating grub-iso/ directory
+  Copying kernel and initramfs
+
+[2/3] Configurando GRUB...
+  Creating grub.cfg
+  GRUB configuration ready
+
+[3/3] Generating ISO...
+  Running grub-mkrescue...
+  
+✅ ISO Booteable creada successfully
+```
+
+### Verify ISO Creation
+
+```bash
+# Check the ISO file exists
+ls -lh ~/pan-os-iso/build/pan-os-booteable.iso
+# Output: -rw-r--r-- 1 user user 156M Feb 16 12:00 pan-os-booteable.iso
+
+# Verify it's a valid ISO
+file ~/pan-os-iso/build/pan-os-booteable.iso
+# Output: ISO 9660 CD-ROM filesystem data...
+```
+
+## Booting ISO in QEMU
+
+The easiest way to test the ISO:
+
+```bash
+qemu-system-x86_64 \
+    -cdrom ~/pan-os-iso/build/pan-os-booteable.iso \
+    -m 2048 \
+    -smp 2 \
+    -nographic \
+    -serial stdio
+```
+
+**Output sequence**:
+
+```
+1. QEMU starts
+2. BIOS/UEFI loads
+3. GRUB menu appears (or auto-boots)
+4. Kernel loads from ISO
+5. Initramfs loads
+6. PanOS shell prompt appears
+```
+
+This validates the ISO is bootable.
+
+## Creating Bootable USB Drive
+
+### Preparation
+
+**Step 1**: Get USB drive information
+
+```bash
+# Connect USB drive to computer
+# WARNING: This will ERASE the USB drive!
+
+# List storage devices
+lsblk
+
+# Output example:
+# sda      8:0    0  500G  0 disk
+# ├─sda1   8:1    0  100M  0 part /boot
+# └─sda2   8:2    0  400G  0 part /
+# sdb      8:16   0   16G  0 disk  ← USB Drive
+# └─sdb1   8:17   0   16G  0 part /media/usb
+
+# Identify USB: /dev/sdb (NOT /dev/sdb1!)
+```
+
+**Step 2**: Unmount USB if mounted
+
+```bash
+sudo umount /media/usb
+# Or
+sudo umount /dev/sdb1
+```
+
+### Writing ISO to USB
+
+**DANGER**: Ensure you have the correct device (`/dev/sdX` not `/dev/sdX1`).
+
+```bash
+# Use dd command to write ISO to USB
+sudo dd if=~/pan-os-iso/build/pan-os-booteable.iso \
+         of=/dev/sdb \
+         bs=4M \
+         status=progress
+         
+# Progress output:
+# 156M bytes (156M) copied, 45.2 s, 3.4 MB/s
+```
+
+**Parameters explained**:
+- `if=`: Input file (ISO)
+- `of=`: Output device (USB drive - use `/dev/sdX` not `/dev/sdX1`)
+- `bs=4M`: Block size (larger = faster, but must fit in RAM)
+- `status=progress`: Show progress
+
+**Expected output**:
+
+```
+156+0 records in
+156+0 records out
+163577856 bytes (164 MB) copied, 45.234 s, 3.4 MB/s
+```
+
+### Verify USB Write
+
+After writing completes:
+
+```bash
+# Verify checksum (optional but recommended)
+sha256sum ~/pan-os-iso/build/pan-os-booteable.iso
+sudo md5sum /dev/sdb | head -c 32
+
+# Eject safe
+sudo eject /dev/sdb
+```
+
+## Booting from USB
+
+### On Physical Computer
+
+1. **Insert USB** into computer
+2. **Turn on** computer
+3. **Press boot menu key** during startup:
+   - **Dell**: F12
+   - **HP**: ESC
+   - **Lenovo**: F12
+   - **ASUS**: DEL or F2
+   - **Generic**: ESC, F1, F2, F10, F12
+
+4. **Select USB drive** from boot menu
+5. **PanOS boots** from USB
+
+### On Virtual Machine
+
+#### VirtualBox
+
+1. Open VirtualBox
+2. **Create new VM**:
+   ```bash
+   VBoxManage createvm --name PanOS --ostype Linux_64 \
+      --register
+   ```
+
+3. **Add virtual hard disk**:
+   ```bash
+   VBoxManage createhd --filename PanOS.vdi --size 4096
+   VBoxManage storagectl PanOS --name SATA --add sata
+   VBoxManage storageattach PanOS --storagectl SATA \
+      --port 0 --device 0 --type hdd --medium PanOS.vdi
+   ```
+
+4. **Attach ISO**:
+   ```bash
+   VBoxManage storagectl PanOS --name IDE --add ide
+   VBoxManage storageattach PanOS --storagectl IDE \
+      --port 0 --device 0 --type dvddrive \
+      --medium ~/pan-os-iso/build/pan-os-booteable.iso
+   ```
+
+5. **Boot VM**:
+   ```bash
+   VBoxHeadless -startvm PanOS
+   ```
+
+OR use VirtualBox GUI: Settings → Storage → attach ISO → boot
+
+#### VMware
+
+1. Open VMware
+2. **Create new VM** with Linux/Other settings
+3. **Attach ISO**: VM Settings → CD/DVD → connect ISO
+4. **Boot** and PanOS loads
+
+#### Hyper-V
+
+1. Open Hyper-V Manager
+2. **New Virtual Machine** → Linux configuration
+3. **Attach ISO**: Generation 2 VM → Firmware → DVD
+4. **Boot**
+
+## Network Boot (PXE)
+
+For server deployments, boot PanOS over network:
+
+### Setup PXE Server
+
+Required on your network:
+
+```bash
+# DHCP server (provides IP)
+# TFTP server (downloads vmlinuz)
+# HTTP server (downloads initramfs)
+
+# Example: minimal DHCP/TFTP config
+# /etc/dnsmasq.conf
+dhcp-range=192.168.1.50,192.168.1.150
+pxe-service=x86PC,"PanOS",pxelinux.0
+tftp-root=/srv/tftp
+```
+
+### Boot PanOS via PXE
+
+Computer with PXE-capable NIC:
+
+1. **Enable PXE** in BIOS settings
+2. **Boot** - pulls vmlinuz and initramfs over network
+3. **PanOS starts** with assigned IP
+
+## Installation on Physical Hardware
+
+Note: PanOS runs from RAM (initramfs), not persistent storage.
+
+### To Make Persistent (Advanced)
+
+See [10-advanced.mdx](./10-advanced.mdx) for:
+- Adding persistent storage
+- Installing to disk
+- Modifying rootfs
+
+### Current Behavior
+
+- **Boots** from USB/ISO
+- **Loads** to RAM
+- **Changes** not saved after reboot
+- **Next boot** loads clean system
+
+This is ideal for:
+- Live systems
+- Demos
+- Testing
+- Embedded systems
+- Diskless machines
+
+## Troubleshooting ISO Issues
+
+### Issue: ISO doesn't boot
+
+**Causes**:
+- Corrupted ISO
+- BIOS doesn't support bootloader
+- USB write failed
+
+**Solutions**:
+
+1. Verify ISO:
+   ```bash
+   file ~/pan-os-iso/build/pan-os-booteable.iso
+   # Should show: ISO 9660
+   ```
+
+2. Test in QEMU first:
+   ```bash
+   qemu-system-x86_64 -cdrom ~/pan-os-iso/build/pan-os-booteable.iso
+   ```
+
+3. Recreate ISO:
+   ```bash
+   ./4-create-iso.sh
+   ```
+
+4. Rewrite USB:
+   ```bash
+   sudo dd if=~/pan-os-iso/build/pan-os-booteable.iso \
+            of=/dev/sdb bs=4M
+   ```
+
+### Issue: USB not recognized at boot
+
+**Causes**:
+- BIOS doesn't see USB
+- USB not in boot priority
+- BIOS in UEFI mode (need BIOS/Legacy)
+
+**Solutions**:
+
+1. Change BIOS settings:
+   - Disable Secure Boot
+   - Enable Legacy/CSM mode
+   - Add USB to boot order
+   - Save and reboot
+
+2. Try different USB port
+
+3. Create USB with different tool:
+   ```bash
+   # Using Etcher (GUI)
+   balena-etcher-1.x.x
+   # Select ISO → Select USB → Flash
+
+   # Or Rufus on Windows
+   ```
+
+### Issue: GRUB menu doesn't appear
+
+**Cause**: Auto-boots to first entry (normal)
+
+**Solution**:
+- Hold **SHIFT** or **ESC** during GRUB to show menu
+- Or wait - it boots in ~10 seconds
+
+### Issue: USB boots but kernel doesn't load
+
+**Cause**: Initramfs mismatch or corruption
+
+**Solution**:
+
+1. Verify ISO integrity:
+   ```bash
+   md5sum ~/pan-os-iso/build/pan-os-booteable.iso
+   ```
+
+2. Recreate ISO:
+   ```bash
+   ./4-create-iso.sh
+   ```
+
+3. Rewrite USB completely:
+   ```bash
+   # Full wipe first
+   sudo dd if=/dev/zero of=/dev/sdb bs=4M status=progress
+   
+   # Then write ISO
+   sudo dd if=~/pan-os-iso/build/pan-os-booteable.iso \
+            of=/dev/sdb bs=4M
+   ```
+
+## Custom GRUB Configuration
+
+You can modify boot options by editing GRUB config before ISO creation.
+
+**Edit**: `1-build.sh` → search for `grub.cfg` → modify boot parameters
+
+Example: Add debug mode entry
+
+```bash
+menuentry "PanOS (Debug)" {
+  insmod gzio
+  insmod part_msdos
+  insmod iso9660
+  search --no-floppy --label PANOS
+  linux /boot/vmlinuz console=ttyS0 debug loglevel=7
+  initrd /boot/initramfs.cpio
+}
+```
+
+Then recreate ISO:
+
+```bash
+./4-create-iso.sh
+```
+
+## ISO Size Optimization
+
+Current ISO: ~156 MB
+
+To reduce size:
+
+1. **Remove debug symbols**:
+   - Edit kernel config to remove`CONFIG_DEBUG_INFO`
+
+2. **Compress better**:
+   - Use xz compression instead of gzip
+   - Modify ISO creation script
+
+3. **Minimize busybox**:
+   - Select only needed commands
+   - Use Alpine Linux instead
+
+See [10-advanced.mdx](./10-advanced.mdx) for detailed customization.
+
+## Distributing PanOS
+
+### Share ISO Online
+
+```bash
+# Generate checksums
+sha256sum ~/pan-os-iso/build/pan-os-booteable.iso > ISO.sha256
+
+# Upload both files:
+# - pan-os-booteable.iso (156 MB)
+# - ISO.sha256
+
+# Users verify:
+sha256sum -c ISO.sha256
+```
+
+### Create Recovery Media
+
+Keep multiple copies:
+
+1. **Main USB** - daily use
+2. **Backup USB** - emergency
+3. **ISO file** - archive
+4. **Network location** - PXE boot
+
+## Next Steps
+
+- **Advanced Customization**: Read [10-advanced.mdx](./10-advanced.mdx)
+- **Learn Architecture**: Read [06-architecture.mdx](./06-architecture.mdx)
+- **Troubleshoot Issues**: Read [08-troubleshooting.mdx](./08-troubleshooting.mdx)
+
+---
+
+**Previous**: [08-troubleshooting.mdx](./08-troubleshooting.mdx)  
+**Next**: [10-advanced.mdx](./10-advanced.mdx)

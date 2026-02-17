@@ -13,7 +13,7 @@ NC='\033[0m'
 
 echo ""
 echo -e "${BLUE}╔════════════════════════════════════════════════════════╗${NC}"
-echo -e "${BLUE}║   PanOS - QEMU & Terminal Interactiva Test     ║${NC}"
+echo -e "${BLUE}║   PanOS - QEMU & Terminal Interactiva Test             ║${NC}"
 echo -e "${BLUE}╚════════════════════════════════════════════════════════╝${NC}"
 echo ""
 

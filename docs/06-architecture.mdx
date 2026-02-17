@@ -1,0 +1,578 @@
+---
+title: "PanOS Architecture and Design"
+description: "Deep dive into PanOS internals, boot process, filesystem structure, and system design"
+author: "PanOS Development Team"
+version: "1.0.0"
+lastUpdated: "2024-02-16"
+difficulty: "advanced"
+estimatedReadTime: "25 min"
+section: "Architecture"
+order: 6
+keywords: ["architecture", "design", "internals", "boot", "filesystem", "kernel", "initramfs"]
+slug: "architecture"
+---
+
+# PanOS Architecture and Design
+
+## Overview
+
+PanOS is a minimal Linux system designed with a specific purpose: **run JavaScript with full Unix tooling**. The architecture reflects this:
+
+```
+Hardware/QEMU
+    ↓
+BIOS/UEFI
+    ↓
+Bootloader (GRUB or kernel direct boot)
+    ↓
+Linux Kernel 6.6.15
+    ↓
+Initramfs (compressed filesystem)
+    ↓
+init script (/init)
+    ↓
+Shell (/bin/sh)
+    ↓
+User applications (Node.js, npm, etc.)
+```
+
+## Component Architecture
+
+### 1. Linux Kernel (6.6.15)
+
+**Purpose**: Core operating system kernel
+
+**Configuration**: Minimal build with only essential features
+
+**Key Features Enabled**:
+```
+✓ x86_64 architecture
+✓ SMP (multi-processor support)
+✓ Serial 8250 console (for QEMU/serial debugging)
+✓ Virtual filesystem (procfs, sysfs, devtmpfs)
+✓ EXT4 filesystem support
+✓ Initramfs/initrd support (BLK_DEV_INITRD)
+✓ VIRTIO virtualization (for QEMU)
+✓ Networking (TCP/IP, DHCP)
+✓ Essential device drivers
+```
+
+**Key Features Disabled**:
+```
+✗ GPU/graphics drivers
+✗ Audio subsystem
+✗ Most network drivers (only VIRTIO used)
+✗ X.org / Wayland
+✗ Unnecessary filesystems
+```
+
+**Size**: 3.3 MB (compressed)
+
+**Boot Time**: ~1-2 seconds
+
+### 2. Busybox
+
+**Purpose**: Complete Unix userspace environment
+
+**What it provides**:
+- Shell (`sh`)
+- 300+ Unix commands
+- Filesystem tools (ls, cp, mv, rm, find)
+- Text processing (sed, awk, grep)
+- Process management (ps, kill, jobs)
+- Network tools (ping, ifconfig, wget, ssh)
+- System utilities (mount, umount, fsck)
+
+**How it works**:
+- Single binary (`/bin/busybox`) 
+- All commands are symlinks pointing to busybox
+- Busybox determines which command to run by checking how it was invoked
+
+**Example**:
+```
+/bin/ls -> /bin/busybox
+/bin/cat -> /bin/busybox
+/bin/grep -> /bin/busybox
+
+When user runs 'ls', busybox is invoked and
+checks argv[0] to see it was called as 'ls'
+```
+
+**Size**: ~5 MB uncompressed
+
+### 3. Node.js Runtime
+
+**Purpose**: JavaScript execution engine
+
+**Version**: v24.0.0
+
+**What's included**:
+- V8 JavaScript engine
+- Node.js standard library
+- Native module bindings
+- Event loop
+- File system access
+- Networking
+- Module system (require/import)
+
+**Size**: ~50 MB uncompressed
+
+**Integration**:
+- Located at `/bin/node`
+- npm at `/bin/npm`
+- Node modules at `/node_modules`
+- Can be invoked like any Unix tool
+
+### 4. Init System
+
+**Purpose**: Initialize and manage system startup
+
+**Implementation**: Simple shell script (`/init`)
+
+**Does the following**:
+1. Mount essential filesystems:
+   - `proc` → process information
+   - `sysfs` → system information
+   - `devtmpfs` → device files
+   - `tmpfs` → temporary files in RAM
+
+2. Create essential device files:
+   - `/dev/console` (serial console)
+   - `/dev/tty` (terminal)
+   - `/dev/null` (null device)
+   - `/dev/zero` (zero device)
+
+3. Print welcome banner
+
+4. Start shell (`/bin/sh`)
+
+**Code flow**:
+```bash
+#!/bin/busybox sh
+exec 2>&1                           # Redirect stderr to stdout
+
+mount -t proc proc /proc            # Mount /proc
+mount -t sysfs sysfs /sys           # Mount /sys
+mount -t devtmpfs devtmpfs /dev     # Mount /dev
+mount -t tmpfs tmpfs /tmp           # Mount /tmp
+
+mknod /dev/console c 5 1            # Create console device
+mknod /dev/tty c 5 0                # Create tty device
+mknod /dev/null c 1 3               # Create null device
+
+echo "PanOS System Ready!"
+exec /bin/sh                        # Start shell (PID 1)
+```
+
+## Filesystem Structure
+
+```
+/                           # Root directory
+├── init                    # Boot script (executable)
+├── bin/                    # User-facing binaries
+│   ├── busybox            # Main executable (7 MB static binary)
+│   ├── sh, ls, cat, ...   # Symlinks to busybox (330 total)
+│   ├── node               # Node.js runtime
+│   ├── npm                # NPM package manager
+│   └── npx                # NPM executor
+├── sbin/                   # System binaries
+│   ├── init               # System init (usually /init)
+│   ├── halt               # System shutdown
+│   └── reboot             # System reboot
+├── lib/                    # System libraries
+│   ├── libc.musl.so.1     # C runtime library (musl)
+│   ├── libcrypto.so       # OpenSSL crypto
+│   ├── libz.so            # Compression library
+│   └── ... (other shared libraries)
+├── proc/                   # Virtual filesystem - process info
+│   ├── cpuinfo            # CPU information
+│   ├── meminfo            # Memory information
+│   └── ... (kernel generated, mounted at runtime)
+├── sys/                    # Virtual filesystem - system info
+│   ├── class/             # Device classes
+│   ├── devices/           # Devices
+│   └── ... (kernel generated, mounted at runtime)
+├── tmp/                    # Temporary directory (RAM-backed)
+│   └── (user files)
+├── root/                   # Root user home directory
+│   ├── boot.js            # Boot script (if custom)
+│   └── .bashrc            # Shell configuration
+├── var/                    # Variable data
+│   ├── lib/               # Application data
+│   ├── log/               # Log files
+│   └── tmp/               # Temporary files
+├── etc/                    # Configuration
+│   ├── hostname           # System hostname
+│   ├── passwd             # User database
+│   └── fstab              # Filesystem table
+└── node_modules/          # NPM global packages
+    ├── npm@10.7.0/
+    ├── ... (installed packages)
+```
+
+## Boot Sequence
+
+### Phase 1: Machine Boot (Hardware)
+
+1. **Power On** → CPU resets, loads BIOS
+2. **BIOS** → Runs power-on self-test, initializes hardware
+3. **Bootloader** → BIOS copies bootloader to memory and jumps to it
+
+### Phase 2: Bootloader (GRUB or Direct)
+
+**Option A: GRUB ISO Boot**
+- GRUB runs (shows menu if available)
+- User selects "PanOS" entry
+- GRUB loads kernel into memory
+- GRUB loads initramfs into memory
+- GRUB hands control to kernel with memory addresses
+
+**Option B: Direct Kernel Boot** (./2-run.sh method)
+- QEMU directly loads vmlinuz at 0x1000000
+- QEMU directly loads initramfs.cpio after kernel
+- QEMU passes memory info to kernel
+- QEMU jumps to kernel entry point
+
+### Phase 3: Kernel Initialization (1-2 seconds)
+
+1. **Kernel setup**:
+   - Decompresses vmlinuz
+   - Sets up memory management
+   - Initializes CPU features
+   - Parses command line parameters
+
+2. **Hardware initialization**:
+   - Detects CPU, APIC, IOMMU
+   - Initializes I/O subsystems
+   - Loads compiled-in drivers
+
+3. **Filesystem setup**:
+   - Mounts rootfs (initramfs as temporary root)
+   - Initializes /dev, /proc, /sys
+
+4. **Kernel messages** (visible on console):
+   ```
+   [    0.000000] Linux version 6.6.15...
+   [    0.000000] Command line: console=ttyS0
+   [    0.050000] Memory: 2M/2048M
+   [    0.100000] Dentry cache hash table entries...
+   ```
+
+### Phase 4: Init Script Execution (~500ms)
+
+1. **Init starts** (first userspace process, PID 1):
+   ```bash
+   # /init runs as PID 1
+   ```
+
+2. **Mounts filesystems**:
+   ```bash
+   mount -t proc proc /proc
+   mount -t sysfs sysfs /sys
+   mount -t devtmpfs devtmpfs /dev
+   mount -t tmpfs tmpfs /tmp
+   ```
+
+3. **Creates device files**:
+   ```bash
+   mknod /dev/console c 5 1
+   mknod /dev/tty c 5 0
+   ```
+
+4. **Prints welcome message**:
+   ```
+   ╔════════════════════════════════════════╗
+   ║        🚀 PanOS - Shell Ready         ║
+   ╚════════════════════════════════════════╝
+   ```
+
+5. **Execs shell**:
+   ```bash
+   exec /bin/sh    # Replace init process with shell
+   ```
+
+### Phase 5: Shell Ready (~3-5 seconds total)
+
+User gets prompt:
+```
+/ #
+```
+
+Can run commands immediately.
+
+## Memory Layout
+
+### At Boot Time
+
+```
+0x0000 - 0x1000         Reserved (BIOS)
+0x1000 - 0x400000       Kernel code
+0x400000 - 0x500000     Kernel data
+0x500000 - 0x1000000    Free memory
+0x1000000+              Initramfs (loaded here by bootloader)
+```
+
+### After Init Mounts
+
+```
+Physical Memory (2048 MB example)
+├── Kernel            (~10 MB)
+├── Initramfs cache   (~100 MB)
+├── Filesystem cache  (~200 MB)
+├── Applications      (variable)
+└── Free memory       (~1700 MB available)
+```
+
+### Virtual Memory Maps
+
+Each process has isolated memory:
+
+```
+Per-process Virtual Memory (64-bit x86_64)
+0x0000000000000000 - 0x00007fffffffffff  User space
+  ├── Text (code)
+  ├── Data (initialized)
+  ├── BSS (uninitialized)
+  ├── Heap (grows up)
+  ├── Stack (grows down)
+  └── Mmap region
+
+0xffff800000000000 - 0xffffffffffffffff  Kernel space
+  ├── Kernel code
+  ├── Kernel data
+  ├── IDT/GDT/LDT
+  └── Page tables
+```
+
+## Process Tree
+
+### At Startup
+
+```
+PID 1: /init (shell script)
+└─ PID 1: /bin/sh (after exec)
+    ├─ PID X: user command 1
+    ├─ PID Y: user command 2
+    └─ ... (each command started by shell)
+```
+
+### During Node.js Session
+
+```
+PID 1: /bin/sh (shell)
+├─ PID 2: node (Node.js process)
+│  └─ PID 3,4,5... (child threads/workers)
+├─ PID 6: ls (user command)
+└─ PID 7: cat (user command)
+```
+
+**Important**: PID 1 is special - if it exits, system dies.
+
+## Initramfs Structure
+
+The initramfs.cpio archive contains:
+
+```
+Compression: gzip
+Format: cpio newc
+Total size: 142 MB (compressed) / 500 MB+ (uncompressed)
+
+Contents:
+- Entire /bin directory (busybox + symlinks)
+- Entire /lib directory (libraries)
+- Entire /sbin directory  
+- Entire /node_modules directory
+- /init script
+- All required device nodes
+- All required directories
+```
+
+**Mounted as**:
+- Initial root filesystem at boot
+- Accessible at `/` during runtime
+- Read-only overlay (or writable depending on configuration)
+
+## QEMU Integration
+
+### QEMU Boot Sequence
+
+1. **QEMU starts** with virtual hardware:
+   - Virtual CPU (emulated x86_64)
+   - Virtual RAM (configurable, default 2 GB)
+   - Virtual disk (none, uses initramfs)
+   - Virtual serial port (kernel output)
+   - Virtual ethernet (network access)
+
+2. **QEMU loads kernel**:
+   - Reads vmlinuz file
+   - Decompresses (already in bzImage format)
+   - Places in memory at 0x1000000
+
+3. **QEMU loads initramfs**:
+   - Reads initramfs.cpio file
+   - Places in memory after kernel
+   - Passes address to kernel via bootloader
+
+4. **QEMU configures bootloader parameters**:
+   - Command line: `console=ttyS0`
+   - Memory size: configurable (1-8 GB)
+   - CPU count: configurable (1-N)
+
+5. **QEMU jumps to kernel entry point**:
+   - CPU executes kernel initialization code
+   - Kernel boots, runs init, shell starts
+
+### Serial Console
+
+All output goes to virtual serial port 0 (/dev/ttyS0):
+
+```bash
+# Inside PanOS
+echo "test" > /dev/ttyS0    # Sends to QEMU's stdout
+
+# In QEMU output
+test
+```
+
+This is how kernel messages and shell output appear:
+
+```
+QEMU emulator version 7.2.0
+[    0.000000] Linux version 6.6.15...
+/ #                          # Shell prompt
+```
+
+### Network in QEMU
+
+Virtual ethernet card provides:
+
+```
+┌─────────────────────────────────────────────────┐
+│ PanOS (inside QEMU)                           │
+│                                                │
+│  eth0: 10.0.2.15/24   (assigned by DHCP)     │
+│  Default gateway: 10.0.2.2 (QEMU's gateway)  │
+│  DNS: 10.0.2.3 (QEMU's resolver)             │
+└─────────────────────────────────────────────────┘
+              ↓
+        Virtual network
+              ↓
+┌─────────────────────────────────────────────────┐
+│ Host machine                                    │
+│                                                │
+│ Can access 10.0.2.0/24 from QEMU              │
+│ QEMU forwards ports using -netdev user params │
+└─────────────────────────────────────────────────┘
+```
+
+Port forwarding examples:
+
+```bash
+# Forward port 8080
+-netdev user,hostfwd=tcp::8080-:8080
+
+# Forward SSH (port 22)
+-netdev user,hostfwd=tcp::2222-:22
+
+# Inside PanOS
+# if you run server on :8080
+# it's accessible from host on localhost:8080
+```
+
+## System Resource Usage
+
+### Kernel Memory
+
+```
+Kernel Text:    1.2 MB (code)
+Kernel Data:    2.1 MB (data)
+Page tables:    1.5 MB
+Caches:         ~100 MB (can grow)
+─────────────────────
+Total:          ~104 MB baseline
+```
+
+### Busybox + Node.js
+
+```
+Busybox:        7 MB
+Node.js:        50 MB
+Libraries:      ~30 MB
+Node modules:   ~50 MB
+─────────────────────
+Total:          ~137 MB (compressed ~135 MB in initramfs)
+```
+
+### Runtime Memory (2 GB allocated)
+
+```
+Kernel:         104 MB
+Busybox:        7 MB (minimal when idle)
+Shell:          1 MB
+Available:      ~1880 MB free
+```
+
+Scales down with less configured RAM.
+
+## Process Lifecycle
+
+### Process Creation
+
+```bash
+# User types command
+/ # npm install express
+
+# Shell (PID 1) forks:
+1. fork() → creates child process
+2. execve() → loads npm binary
+3. npm runs as child
+
+PID 1: /bin/sh (waiting)
+└─ PID X: npm process (executing)
+```
+
+### Process Termination
+
+```bash
+# npm install completes
+# Process calls exit()
+# Kernel marks process as zombie
+# Shell (parent) receives SIGCHLD
+# Shell reaps process and prints prompt
+
+/ # 
+```
+
+## Customization Points
+
+You can modify:
+
+1. **Kernel Configuration** → Edit `1-build.sh` .config
+2. **Init Script** → Edit rootfs init script
+3. **Installed Tools** → Modify Busybox installation
+4. **Node.js Version** → Change download URL
+5. **Boot Parameters** → Edit GRUB module or kernel append
+
+See [10-advanced.mdx](./10-advanced.mdx) for details.
+
+## Performance Characteristics
+
+| Metric | Value | Notes |
+|--------|-------|-------|
+| **Boot Time** | 3-5s | Until shell prompt |
+| **RAM Overhead** | 100-150 MB | Kernel + base system |
+| **Disk Space** | 160 MB | ISO size |
+| **npm install** | 30-60s | For medium packages |
+| **Node startup** | ~100ms | Per process |
+| **Context switch** | ~1µs | System dependent |
+
+## Next Steps
+
+- **Learn Node.js Integration**: Read [07-nodejs-integration.mdx](./07-nodejs-integration.mdx)
+- **Troubleshoot Issues**: Read [08-troubleshooting.mdx](./08-troubleshooting.mdx)
+- **Advanced Customization**: Read [10-advanced.mdx](./10-advanced.mdx)
+
+---
+
+**Previous**: [05-running.mdx](./05-running.mdx)  
+**Next**: [07-nodejs-integration.mdx](./07-nodejs-integration.mdx)

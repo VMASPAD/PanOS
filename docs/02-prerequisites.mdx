@@ -1,0 +1,339 @@
+---
+title: "Prerequisites and System Requirements"
+description: "Complete guide to system requirements, dependencies, and host machine setup for building PanOS"
+author: "PanOS Development Team"
+version: "1.0.0"
+lastUpdated: "2024-02-16"
+difficulty: "beginner"
+estimatedReadTime: "10 min"
+section: "Setup"
+order: 2
+keywords: ["prerequisites", "requirements", "dependencies", "system setup", "host machine"]
+slug: "prerequisites"
+---
+
+# Prerequisites and System Requirements
+
+## Host Operating System
+
+PanOS can only be built on **Linux** systems. Specifically:
+
+### Supported Distributions
+- ✅ Ubuntu 20.04 LTS or newer
+- ✅ Ubuntu 22.04 LTS
+- ✅ Ubuntu 24.04 LTS
+- ✅ Debian 11 (Bullseye) or newer
+- ✅ Debian 12 (Bookworm)
+- ✅ Linux Mint (based on Ubuntu)
+- ✅ Pop!_OS (based on Ubuntu)
+
+### Not Supported
+- ❌ macOS (use Docker or virtual machine)
+- ❌ Windows (use WSL2 or virtual machine)
+- ❌ Other Linux distributions (may work but untested)
+
+## Hardware Requirements
+
+| Component | Minimum | Recommended | Optimal |
+|-----------|---------|-------------|---------|
+| **CPU** | 2 cores | 4 cores | 8+ cores |
+| **RAM** | 4 GB | 8 GB | 16+ GB |
+| **Disk** | 30 GB free | 50 GB free | 100+ GB free |
+| **Network** | Required | Required | Required |
+
+### Details
+
+**CPU Cores**: The build process uses all available cores with `make -j$(nproc)`. More cores = faster compilation.
+
+**RAM**: Minimum 4 GB required; kernel compilation can consume 2-3 GB at peak.
+
+**Disk Space**: You need:
+- 10 GB for Linux kernel source
+- 5 GB for build artifacts  
+- 5 GB for temporary files
+- 10+ GB buffer for safety
+
+**Network**: Required to download:
+- Linux kernel source (~120 MB)
+- Node.js binary (~50 MB)
+- Busybox binary (~5 MB)
+
+## System Packages Required
+
+PanOS build requires these development tools:
+
+### Essential Build Tools
+```
+build-essential           # gcc, make, gcc-c++
+bc                        # Calculator (needed for kernel build)
+bison                     # Parser generator (kernel needs it)
+flex                      # Lexical analyzer (kernel needs it)
+```
+
+### Linux Kernel Development
+```
+libelf-dev               # ELF library (kernel compression)
+libssl-dev               # OpenSSL development (kernel crypto)
+```
+
+### Bootloader & ISO Creation
+```
+grub-common              # GRUB bootloader utilities
+xorriso                  # ISO image creation
+```
+
+### QEMU Virtualization
+```
+qemu-system-x86          # QEMU x86_64 emulator
+```
+
+### Download & Extraction
+```
+wget                     # HTTP downloader
+xz-utils                 # XZ compression utilities
+cpio                     # Archive format tool
+```
+
+## Pre-Installation Checklist
+
+Before installing, verify your system:
+
+### 1. Check Linux Distribution
+```bash
+lsb_release -a
+```
+
+Output should show Ubuntu/Debian variant.
+
+### 2. Check Free Disk Space
+```bash
+df -h
+```
+
+Look for partition with 30+ GB free. Example:
+```
+/dev/sda1       500G  200G  300G  40% /
+```
+
+The `/` partition has 300G free - sufficient.
+
+### 3. Check RAM
+```bash
+free -h
+```
+
+Should show 4+ GB available.
+
+### 4. Check CPU Cores
+```bash
+nproc
+```
+
+Should show 2+ cores. Example output: `8` (8 cores available).
+
+### 5. Test Network
+```bash
+ping -c 1 8.8.8.8
+```
+
+Should succeed. PanOS needs internet to download sources.
+
+## Installation Steps
+
+### Method 1: Automatic Installation (Recommended)
+
+Run the dependency installation script:
+
+```bash
+cd ~/Desktop/Atlas/PanOS
+./0-install-deps.sh
+```
+
+This script will:
+1. ✅ Check if running on Linux
+2. ✅ Detect your distribution
+3. ✅ Prompt for `sudo` password
+4. ✅ Update package lists with `apt-get update`
+5. ✅ Install all required packages
+6. ✅ Verify installation success
+
+**Time Required**: 5-10 minutes depending on internet speed.
+
+### Method 2: Manual Installation
+
+If automatic installation fails, install manually:
+
+```bash
+sudo apt-get update
+
+sudo apt-get install -y \
+  build-essential \
+  bc \
+  bison \
+  flex \
+  libelf-dev \
+  libssl-dev \
+  wget \
+  xz-utils \
+  cpio \
+  grub-common \
+  xorriso \
+  qemu-system-x86
+```
+
+## Verification Commands
+
+After installation, verify each component:
+
+### Verify Build Tools
+```bash
+gcc --version          # GNU C Compiler
+make --version         # Make build system
+```
+
+### Verify Kernel Build Tools
+```bash
+which bc               # Calculator
+which bison            # Parser generator
+which flex             # Lexical analyzer
+pkg-config --modversion openssl  # OpenSSL version
+```
+
+### Verify Bootloader Tools
+```bash
+which grub-mkrescue    # GRUB ISO maker
+which xorrisofs        # ISO image creator
+```
+
+### Verify QEMU
+```bash
+qemu-system-x86_64 --version  # Should show version
+which qemu-system-x86_64      # Should show path
+```
+
+All commands should return without errors.
+
+## Troubleshooting Pre-Installation Issues
+
+### Error: "Command not found"
+
+Some required tools are missing. Run:
+
+```bash
+./0-install-deps.sh
+```
+
+Then verify again.
+
+### Error: "Permission denied" running `0-install-deps.sh`
+
+Make script executable:
+
+```bash
+chmod +x 0-install-deps.sh
+./0-install-deps.sh
+```
+
+### Error: "Not enough space"
+
+You need 30+ GB free. Check with:
+
+```bash
+df -h /
+```
+
+If not enough space, either:
+1. Delete unnecessary files
+2. Use external hard drive
+3. Create a separate partition
+
+### Error: "Unable to locate package"
+
+Package lists are outdated. Run:
+
+```bash
+sudo apt-get update
+./0-install-deps.sh
+```
+
+### Error: "E: Could not open lock file"
+
+Another `apt-get` process is running. Wait and retry:
+
+```bash
+sleep 30
+./0-install-deps.sh
+```
+
+## Optional but Recommended
+
+For better development experience, also install:
+
+```bash
+sudo apt-get install -y \
+  git                    # Version control
+  vim                    # Text editor
+  curl                   # HTTP client (alternative to wget)
+  htop                   # System monitor
+  screen                 # Terminal multiplexer
+```
+
+## Environment Variables
+
+The build scripts use these environment variables:
+
+```bash
+# Home directory (automatically set)
+$HOME
+
+# Workspace for build artifacts
+$HOME/pan-os-iso/build/
+
+# Kernel source directory
+$HOME/pan-os-iso/kernel-src/
+
+# Rootfs directory
+$HOME/pan-os-iso/rootfs/
+```
+
+You can override with:
+
+```bash
+export WORKSPACE="/custom/path"
+```
+
+## System Limits
+
+Some systems have limits that may affect the build:
+
+### File Descriptor Limit
+```bash
+ulimit -n          # Check open files limit
+# Should be >= 1024
+```
+
+If too low, increase:
+
+```bash
+ulimit -n 4096     # Temporary
+# Or edit /etc/security/limits.conf for permanent
+```
+
+### Process Limits
+```bash
+ulimit -u          # Check process limit
+# Should be high enough (usually 63000+)
+```
+
+## Next Steps
+
+Once prerequisites are verified:
+
+1. ✅ **System Ready**: Proceed to [03-installation.mdx](./03-installation.mdx)
+2. 📖 **Understand the Build**: Read [04-building.mdx](./04-building.mdx)
+3. 🔨 **Start Building**: Run `./1-build.sh`
+
+---
+
+**Previous**: [01-getting-started.mdx](./01-getting-started.mdx)  
+**Next**: [03-installation.mdx](./03-installation.mdx)

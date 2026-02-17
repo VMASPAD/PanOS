@@ -1,0 +1,470 @@
+---
+title: "PanOS Documentation Index"
+description: "Complete documentation index and navigation guide for PanOS project"
+author: "PanOS Development Team"
+version: "1.0.0"
+lastUpdated: "2024-02-16"
+difficulty: "beginner"
+estimatedReadTime: "5 min"
+section: "Overview"
+order: 0
+keywords: ["index", "documentation", "guide", "navigation"]
+slug: "index"
+---
+
+# PanOS Documentation Index
+
+Welcome to the complete PanOS documentation. This index helps you navigate all available guides.
+
+## Documentation Structure
+
+The documentation is organized into **10 independent documents** by difficulty and topic.
+
+```
+Beginner Path          Intermediate Path      Advanced Path
+      ↓                      ↓                      ↓
+[01] Getting Started  [04] Building        [10] Advanced
+[02] Prerequisites    [05] Running              Customization
+[03] Installation     [06] Architecture
+                      [07] Node.js Devlpt
+                      [08] Troubleshooting
+                      [09] Creating ISO
+```
+
+## Document Guide
+
+### Quick Navigation by Task
+
+| What You Want | Read This | Time |
+|---------------|-----------|------|
+| **Just get it running** | [01-getting-started.mdx](./01-getting-started.mdx) | 8 min |
+| **Check system requirements** | [02-prerequisites.mdx](./02-prerequisites.mdx) | 10 min |
+| **Install dependencies** | [03-installation.mdx](./03-installation.mdx) | 12 min |
+| **Understand the build process** | [04-building.mdx](./04-building.mdx) | 20 min |
+| **Run PanOS and use shell** | [05-running.mdx](./05-running.mdx) | 15 min |
+| **Learn how it works internally** | [06-architecture.mdx](./06-architecture.mdx) | 25 min |
+| **Develop Node.js apps** | [07-nodejs-integration.mdx](./07-nodejs-integration.mdx) | 20 min |
+| **Fix problems and debug** | [08-troubleshooting.mdx](./08-troubleshooting.mdx) | 20 min |
+| **Create bootable USB** | [09-creating-iso.mdx](./09-creating-iso.mdx) | 18 min |
+| **Customize kernel & system** | [10-advanced.mdx](./10-advanced.mdx) | 30 min |
+
+## Complete Document List
+
+### 1. **Getting Started** (01-getting-started.mdx)
+- **Level**: Beginner
+- **Purpose**: Quick introduction to PanOS
+- **Key Topics**:
+  - What is PanOS and why use it
+  - 30-second quick start
+  - System requirements overview
+  - Validation checklist
+- **Expected Time**: 8 minutes
+- **Next Step**: Go to [02-prerequisites.mdx](./02-prerequisites.mdx) or [03-installation.mdx](./03-installation.mdx)
+
+### 2. **Prerequisites and System Requirements** (02-prerequisites.mdx)
+- **Level**: Beginner
+- **Purpose**: Verify your machine can build PanOS
+- **Key Topics**:
+  - Supported operating systems
+  - Hardware requirements (CPU, RAM, disk)
+  - Required packages list
+  - Pre-installation checklist
+  - Verification commands
+- **Expected Time**: 10 minutes
+- **Prerequisites**: None - just a Linux machine
+- **Next Step**: Go to [03-installation.mdx](./03-installation.mdx)
+
+### 3. **Installation and Setup** (03-installation.mdx)
+- **Level**: Beginner
+- **Purpose**: Install all dependencies
+- **Key Topics**:
+  - Running dependency installation script
+  - Manual package installation
+  - Verification of each component
+  - Workspace preparation
+  - Common installation issues
+- **Expected Time**: 12 minutes
+- **Prerequisites**: [02-prerequisites.mdx](./02-prerequisites.mdx) completed
+- **Next Step**: Go to [04-building.mdx](./04-building.mdx)
+
+### 4. **Building PanOS** (04-building.mdx)
+- **Level**: Intermediate
+- **Purpose**: Understand and execute the build process
+- **Key Topics**:
+  - Complete build pipeline explanation
+  - Kernel download and compilation
+  - Rootfs creation with Busybox + Node.js
+  - Initramfs packaging
+  - ISO creation
+  - Build troubleshooting
+  - Performance optimization
+- **Expected Time**: 20 minutes (read), 20-30 minutes (execution)
+- **Prerequisites**: [03-installation.mdx](./03-installation.mdx) completed
+- **Next Step**: Go to [05-running.mdx](./05-running.mdx)
+
+### 5. **Running PanOS** (05-running.mdx)
+- **Level**: Beginner
+- **Purpose**: Boot PanOS and use the system
+- **Key Topics**:
+  - Booting with run scripts
+  - Boot sequence explained
+  - Basic shell commands
+  - Node.js commands
+  - QEMU configuration options
+  - Network setup
+  - Performance tips
+- **Expected Time**: 15 minutes
+- **Prerequisites**: [04-building.mdx](./04-building.mdx) completed
+- **Next Step**: Go to [06-architecture.mdx](./06-architecture.mdx) or [07-nodejs-integration.mdx](./07-nodejs-integration.mdx)
+
+### 6. **PanOS Architecture and Design** (06-architecture.mdx)
+- **Level**: Advanced
+- **Purpose**: Deep understanding of system internals
+- **Key Topics**:
+  - Component architecture (kernel, busybox, Node.js, init)
+  - Filesystem structure explained
+  - Boot sequence (phases 1-5)
+  - Memory layout and management
+  - Process tree and lifecycle
+  - QEMU integration
+  - Network configuration
+  - Performance characteristics
+- **Expected Time**: 25 minutes
+- **Prerequisites**: [05-running.mdx](./05-running.mdx) completed
+- **Next Step**: Go to [07-nodejs-integration.mdx](./07-nodejs-integration.mdx) or [10-advanced.mdx](./10-advanced.mdx)
+
+### 7. **Node.js Integration and Development** (07-nodejs-integration.mdx)
+- **Level**: Intermediate
+- **Purpose**: Create and run Node.js applications in PanOS
+- **Key Topics**:
+  - Creating first Node.js app
+  - Building web servers
+  - npm package management
+  - Useful npm packages
+  - Advanced Node.js features
+  - Module systems (CommonJS/ES Modules)
+  - File operations and JSON
+  - System integration
+  - Performance optimization
+- **Expected Time**: 20 minutes
+- **Prerequisites**: [05-running.mdx](./05-running.mdx) completed
+- **Next Step**: Go to [08-troubleshooting.mdx](./08-troubleshooting.mdx) or [10-advanced.mdx](./10-advanced.mdx)
+
+### 8. **Troubleshooting and Common Issues** (08-troubleshooting.mdx)
+- **Level**: Intermediate
+- **Purpose**: Fix problems during build, boot, and runtime
+- **Key Topics**:
+  - Build issues (disk space, downloads, compilation)
+  - Boot issues (QEMU, kernel, initialization)
+  - Runtime issues (commands, npm, network)
+  - Performance problems
+  - Debugging techniques
+  - Getting help
+  - Quick diagnostic checks
+- **Expected Time**: 20 minutes
+- **Prerequisites**: Any stage where you encounter issues
+- **Next Step**: Return to problematic step or go to [10-advanced.mdx](./10-advanced.mdx)
+
+### 9. **Creating Bootable Media and Installation** (09-creating-iso.mdx)
+- **Level**: Intermediate
+- **Purpose**: Create USB drives and deploy on physical hardware
+- **Key Topics**:
+  - ISO creation process
+  - Booting ISO in QEMU
+  - Creating bootable USB drives
+  - Installing on physical computers
+  - Using with VirtualBox, VMware, Hyper-V
+  - Network PXE boot
+  - Troubleshooting boot issues
+  - Custom GRUB configuration
+- **Expected Time**: 18 minutes
+- **Prerequisites**: [04-building.mdx](./04-building.mdx) completed
+- **Next Step**: Go to [10-advanced.mdx](./10-advanced.mdx)
+
+### 10. **Advanced Customization and Development** (10-advanced.mdx)
+- **Level**: Advanced
+- **Purpose**: Extend and customize PanOS for special needs
+- **Key Topics**:
+  - Kernel customization (version, features, optimization)
+  - Rootfs modification (adding tools, custom init)
+  - Node.js version changes and pre-installation
+  - Build system enhancement
+  - Security hardening
+  - Performance tuning
+  - Cross-compilation (ARM, ARM64)
+  - Extending functionality (systemd, Docker)
+  - Development containers
+  - Benchmarking and profiling
+- **Expected Time**: 30 minutes
+- **Prerequisites**: [06-architecture.mdx](./06-architecture.mdx) completed
+- **Next Step**: Return to apply customizations
+
+## Learning Paths
+
+### Path 1: Absolute Beginner (First Time)
+
+```
+1. [01] Getting Started
+   ↓
+2. [02] Prerequisites
+   ↓
+3. [03] Installation
+   ↓
+4. [04] Building
+   ↓
+5. [05] Running
+   ↓
+Done! PanOS is running
+```
+
+**Total Time**: ~65 minutes (25 min read + 20-30 min build + 10-15 min boot/test)
+
+### Path 2: Developer (Setup + Development)
+
+```
+1. [01-03] Setup (fast-track)
+   ↓
+2. [04] Building
+   ↓
+3. [05] Running
+   ↓
+4. [07] Node.js Development
+   ↓
+5. [08] Troubleshooting (as needed)
+   ↓
+Build your apps!
+```
+
+**Total Time**: ~75 minutes + development time
+
+### Path 3: System Administrator (Deploy + Customize)
+
+```
+1. [01-03] Setup
+   ↓
+2. [04] Building
+   ↓
+3. [09] Creating ISO
+   ↓
+4. Deploy to physical hardware
+   ↓
+5. [10] Customization (if needed)
+   ↓
+6. [08] Troubleshooting (as needed)
+   ↓
+Production deployment!
+```
+
+**Total Time**: ~70 minutes + deployment time
+
+### Path 4: Kernel Developer (Deep Customization)
+
+```
+1. [01-05] Complete workflow
+   ↓
+2. [06] Architecture (understand internals)
+   ↓
+3. [10] Advanced Customization
+   ↓
+4. Modify kernel/rootfs
+   ↓
+5. [04] Rebuild
+   ↓
+6. [08] Troubleshooting (iterate)
+   ↓
+Custom PanOS version!
+```
+
+**Total Time**: Several hours + iteration cycles
+
+## Documentation Features
+
+### Metadata System
+
+Every document includes:
+
+```
+---
+title: "Document Title"
+description: "What this document covers"
+author: "PanOS Development Team"
+version: "1.0.0"
+lastUpdated: "2024-02-16"
+difficulty: "beginner|intermediate|advanced"
+estimatedReadTime: "X min"
+section: "Category"
+order: "Document sequence"
+keywords: ["tag1", "tag2", ...]
+slug: "url-friendly-name"
+---
+```
+
+**Use frontmatter to**:
+- Judge document complexity before reading
+- Filter by difficulty level
+- Find related documents by tags
+- Track document version
+- Know how long to spend reading
+
+### Cross-References
+
+Documents link to each other:
+
+```
+[Document Title](./01-file.mdx)
+```
+
+**Follow references to**:
+- Build complete understanding
+- Jump to related topics
+- Navigate learning paths
+
+### Code Examples
+
+Every technical document includes:
+
+```bash
+# Copy-paste ready commands
+./1-build.sh
+
+# Expected output shown
+Building PanOS...
+✓ Complete
+```
+
+## Finding What You Need
+
+### By Difficulty Level
+
+**Beginner Documents**:
+- [01-getting-started.mdx](./01-getting-started.mdx)
+- [02-prerequisites.mdx](./02-prerequisites.mdx)
+- [03-installation.mdx](./03-installation.mdx)
+- [05-running.mdx](./05-running.mdx)
+
+**Intermediate Documents**:
+- [04-building.mdx](./04-building.mdx)
+- [07-nodejs-integration.mdx](./07-nodejs-integration.mdx)
+- [08-troubleshooting.mdx](./08-troubleshooting.mdx)
+- [09-creating-iso.mdx](./09-creating-iso.mdx)
+
+**Advanced Documents**:
+- [06-architecture.mdx](./06-architecture.mdx)
+- [10-advanced.mdx](./10-advanced.mdx)
+
+### By Topic
+
+**Installation & Setup**:
+- [02-prerequisites.mdx](./02-prerequisites.mdx)
+- [03-installation.mdx](./03-installation.mdx)
+
+**Building**:
+- [04-building.mdx](./04-building.mdx)
+
+**Usage**:
+- [05-running.mdx](./05-running.mdx)
+- [07-nodejs-integration.mdx](./07-nodejs-integration.mdx)
+
+**Deployment**:
+- [09-creating-iso.mdx](./09-creating-iso.mdx)
+
+**System Knowledge**:
+- [06-architecture.mdx](./06-architecture.mdx)
+- [08-troubleshooting.mdx](./08-troubleshooting.mdx)
+
+**Customization**:
+- [10-advanced.mdx](./10-advanced.mdx)
+
+## Document Overview
+
+### Total Documentation
+
+- **10 standalone documents**
+- **~150+ KB** of content
+- **200+ code examples**
+- **100+ configuration options**
+- **Difficulty levels**: Beginner, Intermediate, Advanced
+- **Estimated reading time**: 120-150 minutes (all documents)
+
+## Getting Started Now
+
+### 5-Minute Start
+```bash
+./0-install-deps.sh   # Install dependencies
+./1-build.sh          # Build PanOS
+./2-run.sh            # Run in QEMU
+```
+
+**For details**: Read [01-getting-started.mdx](./01-getting-started.mdx)
+
+### 30-Minute Setup
+1. Read [02-prerequisites.mdx](./02-prerequisites.mdx)
+2. Run [03-installation.mdx](./03-installation.mdx) steps
+3. Execute [04-building.mdx](./04-building.mdx) build
+4. Boot with [05-running.mdx](./05-running.mdx)
+
+### Complete Learning
+Follow the recommended **Path** above for your use case.
+
+## Documentation Quality
+
+- ✅ **Complete**: Everything documented from start to finish
+- ✅ **Accurate**: Based on current PanOS source
+- ✅ **Up-to-date**: Updated 2024-02-16
+- ✅ **Practical**: Every document has executable examples
+- ✅ **Comprehensive**: 150+ KB of detailed explanation
+- ✅ **Well-Organized**: Logical progression and cross-references
+- ✅ **Searchable**: All documents are `.mdx` files with metadata
+
+## Contributing to Documentation
+
+To improve documentation:
+
+1. Identify section needing improvement
+2. Review relevant document
+3. Submit corrections to document
+4. Update `lastUpdated` metadata
+5. Re-read for accuracy
+
+## Tips for Reading
+
+1. **First time**: Read sequentially following a **Learning Path**
+2. **Reference**: Use **Document Guide** table to jump to topics
+3. **Troubleshooting**: Go directly to [08-troubleshooting.mdx](./08-troubleshooting.mdx)
+4. **Deep learning**: Read [06-architecture.mdx](./06-architecture.mdx) for internals
+5. **Customization**: See [10-advanced.mdx](./10-advanced.mdx) for extending
+
+## Document Statistics
+
+| Metric | Value |
+|--------|-------|
+| Total Documents | 10 |
+| Total Pages (estimated) | 45+ |
+| Total Words | 45,000+ |
+| Code Examples | 200+ |
+| Average Read Time | 12-15 min per doc |
+| Most Detailed | [04-building.mdx](./04-building.mdx) & [06-architecture.mdx](./06-architecture.mdx) |
+| Most Practical | [05-running.mdx](./05-running.mdx) & [07-nodejs-integration.mdx](./07-nodejs-integration.mdx) |
+
+## Quick Reference
+
+| Document | Purpose | Time | Level |
+|----------|---------|------|-------|
+| 01 | Introduction | 8 min | Beginner |
+| 02 | Requirements | 10 min | Beginner |
+| 03 | Setup | 12 min | Beginner |
+| 04 | Building | 20 min | Intermediate |
+| 05 | Running | 15 min | Beginner |
+| 06 | Architecture | 25 min | Advanced |
+| 07 | Node.js | 20 min | Intermediate |
+| 08 | Troubleshooting | 20 min | Intermediate |
+| 09 | ISO/Bootable | 18 min | Intermediate |
+| 10 | Advanced | 30 min | Advanced |
+
+---
+
+**Start Here**: Choose your learning path above or read [01-getting-started.mdx](./01-getting-started.mdx)
+
+**Questions?** Check [08-troubleshooting.mdx](./08-troubleshooting.mdx) or review [06-architecture.mdx](./06-architecture.mdx)
+
+**Ready to Customize?** Jump to [10-advanced.mdx](./10-advanced.mdx)

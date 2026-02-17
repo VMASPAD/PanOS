@@ -1,0 +1,624 @@
+---
+title: "Advanced Customization and Development"
+description: "Advanced techniques for customizing PanOS, modifying kernel, extending functionality, and building upon PanOS"
+author: "PanOS Development Team"
+version: "1.0.0"
+lastUpdated: "2024-02-16"
+difficulty: "advanced"
+estimatedReadTime: "30 min"
+section: "Advanced"
+order: 10
+keywords: ["customization", "kernel modification", "development", "extension", "advanced", "hacking"]
+slug: "advanced"
+---
+
+# Advanced Customization and Development
+
+## Overview
+
+PanOS is fully customizable. You can modify almost everything:
+- Linux kernel configuration
+- Rootfs contents and structure
+- Boot process and init script
+- Node.js version
+- Application packages
+- System utilities
+
+## Kernel Customization
+
+### Changing Kernel Version
+
+Edit `1-build.sh`:
+
+```bash
+# Line 8 (current):
+KERNEL_VERSION="6.6.15"
+
+# Change to:
+KERNEL_VERSION="6.5.0"    # Older stable
+KERNEL_VERSION="6.7.0"    # Newer
+KERNEL_VERSION="5.15.0"   # LTS (very stable)
+```
+
+Available versions: https://www.kernel.org/
+
+Then rebuild:
+
+```bash
+./1-build.sh
+```
+
+### Modifying Kernel Configuration
+
+Edit the kernel `.config` in `1-build.sh`:
+
+**Find section**:
+```bash
+cat > .config << 'EOF'
+# This section defines all kernel options
+EOF
+```
+
+**Add features** (example: enable USB support):
+
+```bash
+# Find and modify
+CONFIG_USB=y                    # Enable USB
+CONFIG_USB_EHCI_HCD=y          # USB 2.0 support
+CONFIG_USB_OHCI_HCD=y          # USB 1.1 support
+CONFIG_USB_STORAGE=y           # USB mass storage
+```
+
+**Remove features** (example: disable networking):
+
+```bash
+# Comment out
+# CONFIG_NET=y                 # Disable networking
+# CONFIG_INET=y                # Disable TCP/IP
+```
+
+### Kernel Modules (Advanced)
+
+Enable module support for dynamic loading:
+
+```bash
+# In .config, add:
+CONFIG_MODULES=y               # Enable module support
+CONFIG_MODULE_UNLOAD=y         # Allow unloading modules
+```
+
+Then build and load modules:
+
+```bash
+# Inside PanOS
+modprobe <module-name>         # Load module
+lsmod                          # List loaded modules
+modinfo <module-name>          # Get module info
+```
+
+### Kernel Size Optimization
+
+Remove unnecessary features to reduce kernel size:
+
+```bash
+# In .config, disable:
+CONFIG_DEBUG_INFO=n            # Remove debug symbols
+CONFIG_DEBUG_KERNEL=n          # Disable kernel debugging
+CONFIG_FRAME_POINTER=n         # Disable frame pointers
+```
+
+This can reduce kernel size by 30-40%.
+
+## Rootfs Customization
+
+### Add Custom Tools
+
+Before building, add binaries to rootfs:
+
+**Edit `1-build.sh`, function `setup_rootfs()`**:
+
+```bash
+# After busybox installation, add:
+# Example: Add curl tool
+wget -q https://github.com/curl/curl/releases/download/curl-7_85_0/curl-7.85.0_1-linux64-generic.tar.gz
+tar -xzf curl-* -C "${ROOTFS_DIR}/bin"
+rm -f curl-*.tar.gz
+```
+
+### Custom Init Script
+
+Edit the init script in `1-build.sh`:
+
+**Find**:
+```bash
+cat > "${ROOTFS_DIR}/init" << 'INIT_EOF'
+#!/bin/busybox sh
+...
+INIT_EOF
+```
+
+**Customize**:
+```bash
+cat > "${ROOTFS_DIR}/init" << 'INIT_EOF'
+#!/bin/busybox sh
+
+# Custom initialization
+echo "Custom PanOS Init Starting..."
+
+# Mount filesystems
+busybox mount -t proc proc /proc
+busybox mount -t sysfs sysfs /sys
+busybox mount -t devtmpfs devtmpfs /dev
+busybox mount -t tmpfs tmpfs /tmp
+
+# Create devices
+[ -e /dev/console ] || busybox mknod /dev/console c 5 1
+[ -e /dev/tty ] || busybox mknod /dev/tty c 5 0
+[ -e /dev/null ] || busybox mknod /dev/null c 1 3
+
+# Custom setup
+export MY_VAR="custom_value"
+echo "Custom variable: $MY_VAR"
+
+# Your automation here
+if [ -f /root/autostart.sh ]; then
+  . /root/autostart.sh
+fi
+
+# Start shell
+exec /bin/sh
+INIT_EOF
+```
+
+### Persistent Root Filesystem
+
+Make changes to running system persist between boots:
+
+**Warning**: Requires disk setup, more complex.
+
+**Concept**:
+```bash
+# Instead of initramfs (RAM)
+# Use actual disk with overlayfs
+
+initramfs (lower read-only layer)
+     ↓
+overlayfs
+     ↓
+persistent /dev/sda1 (upper writable layer)
+     ↓
+/mnt/root (merged view)
+```
+
+Not covered in basic guide - see advanced overlay techniques.
+
+## Node.js Customization
+
+### Change Node.js Version
+
+Edit `1-build.sh`, search for Node.js download:
+
+```bash
+# Current
+NODEJS_VERSION="24.0.0"
+
+# Change to
+NODEJS_VERSION="20.10.0"      # LTS
+NODEJS_VERSION="22.0.0"       # Current
+NODEJS_VERSION="18.17.0"      # Older LTS
+```
+
+Check available versions: https://nodejs.org/dist/
+
+Rebuild:
+
+```bash
+./1-build.sh
+```
+
+### Build Node.js from Source
+
+For ARM or other architectures:
+
+```bash
+# Add to 1-build.sh
+cd /tmp
+wget https://github.com/nodejs/node/archive/v24.0.0.tar.gz
+tar -xzf v24.0.0.tar.gz
+cd node-24.0.0
+
+./configure --prefix=/usr
+make -j$(nproc)
+make install
+
+# Node now built locally
+```
+
+### Pre-install npm Packages
+
+Add packages to global npm during build:
+
+```bash
+# In rootfs creation section:
+/bin/npm install -g \
+  express \
+  lodash \
+  typescript \
+  --prefix /node_modules_global
+
+# Copy to rootfs
+cp -r /node_modules_global/* ${ROOTFS_DIR}/node_modules/
+```
+
+## Build System Enhancement
+
+### Automated Scripts
+
+Create helper scripts for common tasks:
+
+**rebuild-kernel.sh**:
+```bash
+#!/bin/bash
+echo "Rebuilding kernel with updated config..."
+rm -rf ~/pan-os-iso/kernel-src/linux-6.6.15
+./1-build.sh
+echo "Complete!"
+```
+
+**quick-test.sh**:
+```bash
+#!/bin/bash
+./1-build.sh && ./2-run.sh
+```
+
+### Makefile Enhancements
+
+Edit `Makefile` to add custom targets:
+
+```makefile
+# Add to Makefile
+custom-build:
+	@echo "Custom build starting..."
+	@./1-build.sh
+	@echo "Build complete!"
+
+test-iso:
+	@qemu-system-x86_64 -cdrom ~/pan-os-iso/build/pan-os-booteable.iso
+
+shell-in-rootfs:
+	@cd ~/pan-os-iso/rootfs && /bin/sh
+```
+
+Then run:
+
+```bash
+make custom-build
+make test-iso
+```
+
+## System Architecture Modifications
+
+### Add Swap Space
+
+During boot, allocate swap:
+
+**Edit init script**:
+```bash
+# Add after filesystems mounted
+dd if=/dev/zero of=/swapfile bs=1M count=256
+mkswap /swapfile
+swapon /swapfile
+echo "Swap configured: 256 MB"
+```
+
+### Add User Management
+
+Create non-root user:
+
+**Edit init script**:
+```bash
+# After initial setup
+mkdir -p /home/user
+echo "user:x:1000:1000::/home/user:/bin/sh" >> /etc/passwd
+echo "user::1000:user" >> /etc/group
+chown -R user:user /home/user
+echo "User 'user' created"
+```
+
+Access as:
+```bash
+/ # su - user
+user $ whoami
+user
+```
+
+### Network Configuration
+
+Static IP configuration:
+
+**Edit init script**:
+```bash
+# Instead of DHCP:
+ip addr add 192.168.1.100/24 dev eth0
+ip link set eth0 up
+ip route add default via 192.168.1.1
+echo "nameserver 8.8.8.8" > /etc/resolv.conf
+```
+
+## Security Hardening
+
+### Read-Only Root Filesystem
+
+Make rootfs immutable:
+
+```bash
+# After mounting rootfs
+mount -o remount,ro /
+
+# Only /tmp is writable
+mount -t tmpfs tmpfs /tmp
+```
+
+Edit init script .config:
+
+```bash
+# Change from:
+exec /bin/sh
+
+# To:
+mount -o remount,ro /
+exec /bin/sh
+```
+
+### Disable Unnecessary Services
+
+Remove unneeded daemons:
+
+```bash
+# In init script, simplify to absolute minimum
+# Remove any service startup
+# Should only have:
+# 1. Mount filesystems
+# 2. Create devices
+# 3. Start shell
+```
+
+### Remove Debug Symbols
+
+Reduce attack surface:
+
+```bash
+# In kernel config:
+CONFIG_DEBUG_INFO=n
+CONFIG_DEBUG_KERNEL=n
+
+# Strip binaries:
+strip -s /bin/busybox
+strip -s /bin/node
+```
+
+## Performance Tuning
+
+### Kernel Command Line Optimization
+
+In GRUB config or boot parameters:
+
+```bash
+# Current:
+linux /boot/vmlinuz console=ttyS0
+
+# Optimized:
+linux /boot/vmlinuz console=ttyS0 quiet quiet loglevel=0 \
+  mitigations=off ipv6.disable=1
+```
+
+Parameters:
+- `quiet loglevel=0`: Suppress kernel messages
+- `mitigations=off`: Disable CPU mitigations (performance)
+- `ipv6.disable=1`: Disable unused IPv6
+
+### Kernel Preemption
+
+For real-time performance:
+
+```bash
+# In kernel config:
+CONFIG_PREEMPT=y              # Lower latency
+CONFIG_PREEMPT_RT=y           # Real-time kernel
+```
+
+## Cross-Compilation
+
+Build for different architecture:
+
+### ARM64 (for ARM servers)
+
+```bash
+export ARCH=arm64
+export CROSS_COMPILE=aarch64-linux-gnu-
+
+# Install ARM toolchain
+sudo apt-get install -y gcc-aarch64-linux-gnu
+
+# Then modify 1-build.sh for ARM64:
+# Change kernel config
+# Change qemu-system to qemu-system-aarch64
+```
+
+### ARM32
+
+```bash
+export ARCH=arm
+export CROSS_COMPILE=arm-linux-gnueabihf-
+
+sudo apt-get install -y gcc-arm-linux-gnueabihf
+
+# Modify build scripts similarly
+```
+
+## Extending Functionality
+
+### Add Systemd Services (Advanced)
+
+Replace init script-based startup with systemd:
+
+```bash
+# Create /lib/systemd/system/myapp.service
+[Unit]
+Description=My Node.js Application
+After=network.target
+
+[Service]
+Type=simple
+ExecStart=/bin/node /opt/myapp/main.js
+WorkingDirectory=/opt/myapp
+User=root
+
+[Install]
+WantedBy=multi-user.target
+
+# Then in init:
+systemctl enable myapp
+systemctl start myapp
+```
+
+### Docker Integration
+
+Use PanOS as base for Docker images:
+
+```dockerfile
+FROM scratch
+ADD pan-os-booteable.iso /
+ENTRYPOINT ["/bin/sh"]
+```
+
+### Development Containers
+
+Create minimal development environment:
+
+```bash
+# Add development tools to rootfs:
+# - gcc (C compiler)
+# - make (build tool)
+# - git (version control)
+# - vim (editor)
+
+npm install -g \
+  typescript \
+  webpack \
+  babel-cli
+```
+
+## Troubleshooting Custom Builds
+
+### Build fails after customization
+
+1. Test changes on small portion first
+2. Revert to known working state
+3. Rebuild:
+   ```bash
+   ./1-build.sh
+   ```
+
+### Kernel won't compile with custom config
+
+Try with more verbose output:
+
+```bash
+# In kernel compile section, change:
+make -j$(nproc) 2>&1 | tee build.log
+
+# Then check build.log for errors
+tail -100 build.log
+```
+
+### Boot fails after customization
+
+1. Check init script syntax:
+   ```bash
+   # Validate shell script
+   sh -n init
+   ```
+
+2. Verify all required commands exist:
+   ```bash
+   grep -o '[a-z]*' init | sort -u | xargs -I {} which {}
+   ```
+
+3. Enable verbose boot:
+   ```bash
+   linux /boot/vmlinuz ... loglevel=7
+   ```
+
+## Performance Benchmarking
+
+### Measure Boot Time
+
+From power-on to shell:
+
+```bash
+# Add timestamp tracking in init
+echo "[$(date +%s)] Starting init" >> /root/boot.log
+
+# Check elapsed time
+cat /root/boot.log
+```
+
+### Memory Profiling
+
+Inside PanOS:
+
+```bash
+/ # ps aux | grep -oP 'VSZ|RSS'
+/ # free -h
+/ # cat /proc/meminfo
+```
+
+### CPU Usage
+
+```bash
+/ # top -b -n 1
+/ # mpstat -P ALL
+/ # perf stat node myapp.js
+```
+
+## Documentation and Versioning
+
+### Version Control
+
+Track your customizations:
+
+```bash
+git init ~/pan-os-iso
+git add .
+git commit -m "PanOS custom build v1.0"
+git tag v1.0
+```
+
+### Build Reproduction
+
+Document exact build parameters:
+
+```bash
+# build-info.txt
+Build Date: 2024-02-16
+Kernel Version: 6.6.15
+Node.js Version: 24.0.0
+Customizations:
+  - Added custom tools
+  - Modified init script
+  - Optimized kernel config
+Total Size: 156 MB
+```
+
+## Next Steps
+
+- **Review Architecture**: Read [06-architecture.mdx](./06-architecture.mdx)
+- **Learn Node.js**: Read [07-nodejs-integration.mdx](./07-nodejs-integration.mdx)
+- **Troubleshoot**: Read [08-troubleshooting.mdx](./08-troubleshooting.mdx)
+
+---
+
+**Previous**: [09-creating-iso.mdx](./09-creating-iso.mdx)
+
+**Documentation Complete** - All 10 documents created!

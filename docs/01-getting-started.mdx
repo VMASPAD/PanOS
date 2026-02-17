@@ -1,0 +1,161 @@
+---
+title: "Getting Started with PanOS"
+description: "Quick introduction and setup guide to get PanOS running in minutes"
+author: "PanOS Development Team"
+version: "1.0.0"
+lastUpdated: "2024-02-16"
+difficulty: "beginner"
+estimatedReadTime: "8 min"
+section: "Getting Started"
+order: 1
+keywords: ["quick start", "setup", "introduction", "first steps"]
+slug: "getting-started"
+---
+
+# Getting Started with PanOS
+
+## What is PanOS?
+
+PanOS is a minimal, from-scratch Linux operating system specifically designed for JavaScript developers. It combines:
+
+- **Linux Kernel 6.6.15** - Custom compiled for minimal footprint
+- **Node.js v24.0.0** - Integrated as the primary runtime
+- **npm** - Package manager pre-installed
+- **Busybox 1.35** - Complete Unix toolset
+- **QEMU Compatible** - Runs in virtual machines instantly
+- **Bootable ISO** - Can be installed on physical hardware
+
+The entire system fits in ~160 MB and boots in seconds.
+
+## Why PanOS?
+
+| Feature | Benefit |
+|---------|---------|
+| **Minimal** | No unnecessary packages, pure Linux |
+| **Fast** | Boots in 3-5 seconds |
+| **Complete** | All tools you need to run Node.js apps |
+| **Hackable** | Source code available, fully customizable |
+| **Educational** | Learn kernel compilation, system design, OS fundamentals |
+
+## 30-Second Quick Start
+
+```bash
+# 1. Install dependencies (one time, requires sudo)
+./0-install-deps.sh
+
+# 2. Build PanOS (20-30 minutes)
+./1-build.sh
+
+# 3. Run in QEMU
+./2-run.sh
+```
+
+That's it! You'll see a shell prompt ready to run Node.js.
+
+## What Happens After Build?
+
+Once you see the prompt:
+
+```bash
+/ #
+```
+
+You can immediately run:
+
+```bash
+# Check Node.js
+node --version           # v24.0.0
+npm --version            # 10.x.x
+
+# Run JavaScript
+node -e "console.log('Hello from PanOS!')"
+
+# Create a project
+npm init -y
+npm install express      # install packages
+
+# Run the boot script
+node boot.js
+
+# List available commands
+ls /bin                  # hundreds of busybox commands
+```
+
+## Exiting PanOS
+
+Press **Ctrl+A** then **X** to exit QEMU and return to your terminal.
+
+## System Requirements
+
+Your host machine needs:
+
+- **OS**: Ubuntu 20.04+ or Debian-based Linux
+- **RAM**: Minimum 4 GB (recommended 8 GB)
+- **Disk Space**: 30 GB free (kernel compilation needs space)
+- **CPU**: Multi-core processor (build uses all cores)
+- **Time**: 20-30 minutes for first build
+
+## What's in the Build?
+
+After running `./1-build.sh`, you get:
+
+```
+~/pan-os-iso/build/
+├── vmlinuz              # Linux kernel (~3.3 MB)
+├── initramfs.cpio       # Root filesystem (~140 MB)
+└── pan-os-booteable.iso # Bootable ISO (~156 MB)
+```
+
+These files are:
+- **vmlinuz**: The compiled Linux kernel
+- **initramfs.cpio**: Complete filesystem with Busybox + Node.js
+- **ISO**: For booting on physical machines
+
+## Validation
+
+After build completes, check status:
+
+```bash
+./3-check.sh
+```
+
+This validates:
+- ✅ Kernel present
+- ✅ Initramfs created
+- ✅ Node.js integrated
+- ✅ npm included
+- ✅ ISO ready
+
+## Next Steps
+
+1. **Learn the Prerequisites** → Read `02-prerequisites.mdx`
+2. **Deep Dive into Build Process** → Read `04-building.mdx`
+3. **Understanding Architecture** → Read `06-architecture.mdx`
+4. **Advanced Customization** → Read `10-advanced.mdx`
+
+## Troubleshooting Quick Fixes
+
+| Problem | Solution |
+|---------|----------|
+| **"Command not found"** | Run `./0-install-deps.sh` first |
+| **"Disk space error"** | Need 30+ GB free; clear space or use external drive |
+| **"Build fails at kernel"** | Try again; sometimes network timeouts occur |
+| **QEMU won't start** | Ensure `qemu-system-x86_64` is installed |
+
+## Common Questions
+
+**Q: Can I boot PanOS on real hardware?**  
+A: Yes! Use `./4-create-iso.sh` to create an ISO, then burn to USB with `dd` command.
+
+**Q: How long does build take?**  
+A: 20-30 minutes on a modern 4-core machine. Faster on higher core counts.
+
+**Q: Can I modify the source?**  
+A: Absolutely. All scripts are editable. See `10-advanced.mdx` for customization.
+
+**Q: What if build fails halfway?**  
+A: Run `./1-build.sh` again. It will resume from where it failed.
+
+---
+
+**Next Document**: [02-prerequisites.mdx](./02-prerequisites.mdx) - Complete system requirements and validation

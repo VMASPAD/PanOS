@@ -1,0 +1,543 @@
+---
+title: "Node.js Integration and Development"
+description: "Guide to using Node.js in PanOS, running applications, npm packages, and development workflows"
+author: "PanOS Development Team"
+version: "1.0.0"
+lastUpdated: "2024-02-16"
+difficulty: "intermediate"
+estimatedReadTime: "20 min"
+section: "Development"
+order: 7
+keywords: ["nodejs", "npm", "development", "packages", "javascript", "applications"]
+slug: "nodejs-integration"
+---
+
+# Node.js Integration and Development
+
+## Node.js in PanOS
+
+PanOS includes **Node.js v24.0.0** as a first-class component. It's not an afterthought - it's integrated into the system kernel and filesystem.
+
+### What's Included
+
+```bash
+# Core runtime
+/bin/node                 # 50 MB Node.js binary
+
+# Package manager
+/bin/npm                  # NPM v10.7.0
+/bin/npx                  # NPM executor
+
+# Core modules
+/node_modules             # npm packages directory
+```
+
+### Instant Access
+
+Node.js works immediately after boot:
+
+```bash
+/ # node --version
+v24.0.0
+
+/ # npm --version
+10.7.0
+
+/ # node -e "console.log('Ready to code!')"
+Ready to code!
+```
+
+## Creating Your First Node.js App
+
+### 1. Create Project Directory
+
+```bash
+/ # mkdir -p /home/hello-panos
+/ # cd /home/hello-panos
+```
+
+### 2. Initialize npm Project
+
+```bash
+/home/hello-panos # npm init -y
+
+Wrote to /home/hello-panos/package.json:
+{
+  "name": "hello-panos",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
+}
+```
+
+### 3. Create Main File
+
+```bash
+/home/hello-panos # cat > index.js << 'EOF'
+console.log('👋 Hello from PanOS!');
+console.log('Running Node.js', process.version);
+console.log('Platform:', process.platform);
+console.log('Architecture:', process.arch);
+EOF
+```
+
+### 4. Run Application
+
+```bash
+/home/hello-panos # node index.js
+👋 Hello from PanOS!
+Running Node.js v24.0.0
+Platform: linux
+Architecture: x64
+```
+
+Success! You have a running Node.js application.
+
+## Building a Web Server
+
+### 1. Create HTTP Server
+
+```bash
+/home/hello-panos # cat > server.js << 'EOF'
+const http = require('http');
+const port = 8080;
+
+const server = http.createServer((req, res) => {
+  if (req.url === '/') {
+    res.writeHead(200, {'Content-Type': 'text/html'});
+    res.end(`
+      <h1>Welcome to PanOS</h1>
+      <p>Node.js Server Running on Port ${port}</p>
+      <p>OS: ${process.platform}</p>
+      <p>Memory: ${Math.round(process.memoryUsage().rss / 1024 / 1024)} MB</p>
+    `);
+  } else {
+    res.writeHead(404, {'Content-Type': 'text/plain'});
+    res.end('404 Not Found');
+  }
+});
+
+server.listen(port, () => {
+  console.log(`Server running on http://0.0.0.0:${port}/`);
+});
+EOF
+```
+
+### 2. Run Server
+
+```bash
+/home/hello-panos # node server.js
+Server running on http://0.0.0.0:8080/
+```
+
+### 3. Test from Another Terminal
+
+In another terminal on your host:
+
+```bash
+# If using QEMU port forwarding (configured in ./2-run.sh)
+curl http://localhost:8080/
+```
+
+Or inside PanOS on another terminal:
+
+```bash
+/ # wget -q -O - http://localhost:8080/
+<h1>Welcome to PanOS</h1>
+...
+```
+
+## Installing npm Packages
+
+### Install Locally
+
+```bash
+/home/hello-panos # npm install express
++ express@4.18.2
+```
+
+This downloads and installs Express.js into `node_modules/`.
+
+### Using Installed Package
+
+```bash
+/home/hello-panos # cat > app.js << 'EOF'
+const express = require('express');
+const app = express();
+
+app.get('/', (req, res) => {
+  res.json({ 
+    message: 'Express app running on PanOS',
+    node_version: process.version
+  });
+});
+
+app.listen(3000, () => {
+  console.log('Express app listening on port 3000');
+});
+EOF
+
+/home/hello-panos # node app.js
+Express app listening on port 3000
+```
+
+### Install Global Package
+
+```bash
+/ # npm install -g lodash
++ lodash@4.17.21
+
+# Now available anywhere
+/ # node -e "const _ = require('lodash'); console.log(_)"
+[Function: lodash]
+```
+
+## Useful npm Packages for PanOS
+
+### Productivity Tools
+
+```bash
+npm install -g @angular/cli      # Angular development
+npm install -g vue               # Vue.js
+npm install -g next              # Next.js framework
+npm install -g vite              # Vite build tool
+```
+
+### Utilities
+
+```bash
+npm install -g typescript        # TypeScript support
+npm install -g eslint            # Code linting
+npm install -g prettier          # Code formatting
+npm install -g dotenv            # Environment variables
+```
+
+### Servers & Frameworks
+
+```bash
+npm install express              # Express web framework
+npm install fastify              # Fastify server
+npm install koa                  # Koa server
+npm install nestjs               # NestJS framework
+```
+
+## Advanced Node.js Usage
+
+### Environment Variables
+
+```bash
+/home/hello-panos # export NODE_ENV=production
+/home/hello-panos # export MY_VAR=hello
+
+/home/hello-panos # node -e "console.log(process.env.MY_VAR)"
+hello
+```
+
+### Node Inspector (Debugging)
+
+Enable debugging:
+
+```bash
+/home/hello-panos # node --inspect server.js
+Debugger listening on ws://127.0.0.1:9229/...
+```
+
+Connect from host with Chrome DevTools or VS Code.
+
+### Performance Profiling
+
+```bash
+/home/hello-panos # node --prof app.js
+# Generates isolate-*.log file
+
+/home/hello-panos # node --prof-process isolate-*.log > profile.txt
+# Analyze profile.txt
+```
+
+### Cluster Module
+
+Multi-process Node.js:
+
+```javascript
+const cluster = require('cluster');
+const os = require('os');
+
+if (cluster.isMaster) {
+  // Master process
+  const numCPUs = os.cpus().length;
+  for (let i = 0; i < numCPUs; i++) {
+    cluster.fork();
+  }
+} else {
+  // Worker process
+  const http = require('http');
+  http.createServer((req, res) => {
+    res.end('Response from worker ' + process.pid);
+  }).listen(8000);
+}
+```
+
+## Package Management
+
+### Check Installed Packages
+
+```bash
+/home/hello-panos # npm list
+hello-panos@1.0.0 /home/hello-panos
+└── express@4.18.2
+    ├── accepts@1.3.8
+    ├── content-disposition@0.5.4
+    └── ... (many more)
+```
+
+### Update Packages
+
+```bash
+/home/hello-panos # npm update
+```
+
+### Remove Package
+
+```bash
+/home/hello-panos # npm uninstall express
+```
+
+### Lock Dependencies
+
+Create `package-lock.json`:
+
+```bash
+/home/hello-panos # npm install
+# Automatically creates package-lock.json
+# Guarantees reproducible installs
+```
+
+## Development Workflows
+
+### Watchable Development
+
+Install `nodemon` for auto-restart:
+
+```bash
+/home/hello-panos # npm install --save-dev nodemon
+/home/hello-panos # npx nodemon server.js
+[nodemon] watching extensions: js,json
+[nodemon] starting `node server.js`
+Server running on http://0.0.0.0:8080/
+
+# Now edit server.js and nodemon auto-restarts
+```
+
+### TypeScript Development
+
+```bash
+/home/hello-panos # npm install -g typescript
+
+/home/hello-panos # cat > app.ts << 'EOF'
+interface User {
+  name: string;
+  age: number;
+}
+
+const user: User = {
+  name: 'PanOS Developer',
+  age: 30
+};
+
+console.log(`Hello ${user.name}!`);
+EOF
+
+/home/hello-panos # tsc app.ts
+/home/hello-panos # node app.js
+Hello PanOS Developer!
+```
+
+### Building Projects
+
+Example: Vite build
+
+```bash
+/home/hello-panos # npm create vite@latest my-app -- --template vue
+/home/hello-panos # cd my-app
+/home/hello-panos/my-app # npm install
+/home/hello-panos/my-app # npm run dev
+```
+
+## Module System
+
+### CommonJS (Node.js native)
+
+```javascript
+// math.js
+module.exports = {
+  add: (a, b) => a + b,
+  subtract: (a, b) => a - b
+};
+
+// app.js
+const math = require('./math');
+console.log(math.add(5, 3));  // 8
+```
+
+### ES Modules (Node.js 12+)
+
+Enable in `package.json`:
+
+```json
+{
+  "type": "module"
+}
+```
+
+Then use:
+
+```javascript
+// math.js
+export const add = (a, b) => a + b;
+export const subtract = (a, b) => a - b;
+
+// app.js
+import { add, subtract } from './math.js';
+console.log(add(5, 3));  // 8
+```
+
+## File Operations
+
+### Reading/Writing Files
+
+```javascript
+const fs = require('fs');
+
+// Write file
+fs.writeFileSync('output.txt', 'Hello from Node.js!');
+
+// Read file
+const content = fs.readFileSync('output.txt', 'utf8');
+console.log(content);  // Hello from Node.js!
+
+// Async version
+fs.writeFile('async.txt', 'Async write', (err) => {
+  if (err) throw err;
+  console.log('File written!');
+});
+```
+
+### Working with JSON
+
+```javascript
+const fs = require('fs');
+
+// Write JSON
+const data = { name: 'PanOS', version: '1.0.0' };
+fs.writeFileSync('data.json', JSON.stringify(data, null, 2));
+
+// Read JSON
+const read = JSON.parse(fs.readFileSync('data.json', 'utf8'));
+console.log(read.name);  // PanOS
+```
+
+## System Integration
+
+### Working with Processes
+
+```javascript
+const { execSync } = require('child_process');
+
+// Run shell command
+const result = execSync('ps aux | wc -l').toString();
+console.log(`Running processes: ${result}`);
+
+// Run command asynchronously
+const { exec } = require('child_process');
+exec('uptime', (err, stdout, stderr) => {
+  if (err) throw err;
+  console.log(stdout);
+});
+```
+
+### Environment & System Info
+
+```javascript
+const os = require('os');
+
+console.log('Platform:', os.platform());                    // linux
+console.log('Arch:', os.arch());                            // x64
+console.log('CPUs:', os.cpus().length);                     // 2-8
+console.log('Free Memory:', Math.round(os.freemem() / 1024 / 1024), 'MB');
+console.log('Total Memory:', Math.round(os.totalmem() / 1024 / 1024), 'MB');
+console.log('Temp Directory:', os.tmpdir());                // /tmp
+```
+
+## Performance Tips
+
+### 1. Memory Management
+
+Monitor memory usage:
+
+```javascript
+console.log(process.memoryUsage());
+// Output:
+// {
+//   rss: 50000000,        // Resident set size
+//   heapTotal: 20000000,  // Total heap
+//   heapUsed: 10000000,   // Heap in use
+//   external: 5000000
+// }
+```
+
+### 2. CPU Usage
+
+Check CPU availability:
+
+```bash
+/ # nproc
+4  # 4 cores available
+```
+
+Use all cores with clustering:
+
+```javascript
+const cluster = require('cluster');
+const os = require('os');
+
+if (cluster.isMaster) {
+  const numCPUs = os.cpus().length;
+  for (let i = 0; i < numCPUs; i++) cluster.fork();
+} else {
+  // Worker code
+}
+```
+
+### 3. Disk I/O Optimization
+
+Use streams for large files:
+
+```javascript
+const fs = require('fs');
+
+// Bad: loads entire file into memory
+const data = fs.readFileSync('huge.txt');
+
+// Good: streams data in chunks
+fs.createReadStream('huge.txt')
+  .on('data', (chunk) => {
+    // Process chunk
+  });
+```
+
+## Next Steps
+
+- **Troubleshoot Issues**: Read [08-troubleshooting.mdx](./08-troubleshooting.mdx)
+- **Create Bootable Media**: Read [09-creating-iso.mdx](./09-creating-iso.mdx)
+- **Advanced Customization**: Read [10-advanced.mdx](./10-advanced.mdx)
+
+---
+
+**Previous**: [06-architecture.mdx](./06-architecture.mdx)  
+**Next**: [08-troubleshooting.mdx](./08-troubleshooting.mdx)
