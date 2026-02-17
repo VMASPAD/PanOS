@@ -73,6 +73,13 @@ To exit QEMU: press **Ctrl+A** then **X**.
 | `3-check.sh`        | Validates build artifacts (kernel, initramfs, Node.js presence, ISO) |
 | `4-create-iso.sh`   | Creates a GRUB-based bootable ISO (`pan-os-booteable.iso`) |
 
+## Gallery
+
+![img](/grub.png)
+![img](/qemu.png)
+![img](/vm-vite.png)
+![img](/qemu-vite.png)
+
 ## Build Artifacts
 
 All output goes to `~/pan-os-iso/build/`:
