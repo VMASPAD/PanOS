@@ -14,6 +14,8 @@ PanOS is a from-scratch Linux distribution that compiles a custom kernel, bundle
 | **Boot**     | initramfs (cpio), GRUB ISO     |
 | **VM**       | QEMU x86_64 (serial console)   |
 
+# Roadmap
+[Roadmap](https://panos-pink.vercel.app/roadmap)
 ## Prerequisites
 
 A Debian/Ubuntu-based host with the following packages:

@@ -1,0 +1,8 @@
+.dockerignore
+scripts/*
+tests/*
+.git/*
+build/*
+docker-compose.yml
+Dockerfile
+docker/*
