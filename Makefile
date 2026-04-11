@@ -1,66 +1,60 @@
-# Makefile for PanOS Build
+# PanOS Makefile
 # Usage: make [target]
 
-.PHONY: help auto quick menu run qemu clean rebuild
+.PHONY: help build auto run qemu iso deps check clean rebuild docker arm64
 
-# Detect script dir
 SCRIPT_DIR := $(dir $(realpath $(lastword $(MAKEFILE_LIST))))
 
 help:
-	@echo "╔════════════════════════════════════════╗"
-	@echo "║ PanOS - Makefile Targets        		║"
-	@echo "╚════════════════════════════════════════╝"
 	@echo ""
-	@echo "Available targets:"
+	@echo "  PanOS - Build Targets"
+	@echo "  ─────────────────────────────────"
 	@echo ""
-	@echo "  make auto     - Complete automatic build"
-	@echo "  make quick    - Fast (alias of auto)"
-	@echo "  make menu     - Interactive menu"
-	@echo "  make qemu     - Run in QEMU"
-	@echo "  make run      - Alias of qemu"
-	@echo "  make clean    - Clean ~/pan-os"
-	@echo "  make rebuild  - Clean and rebuild everything"
-	@echo "  make deps     - Check dependencies"
+	@echo "  make build    Build kernel + rootfs"
+	@echo "  make auto     Full build (deps + build + ISO)"
+	@echo "  make run      Run in QEMU"
+	@echo "  make iso      Create bootable ISO"
+	@echo "  make deps     Install dependencies"
+	@echo "  make check    Check build status"
+	@echo "  make docker   Build & run with Docker"
+	@echo "  make arm64    Build for ARM64"
+	@echo "  make clean    Remove build artifacts"
+	@echo "  make rebuild  Clean + full build"
+	@echo "  make menu     Interactive menu"
 	@echo ""
+
+build:
+	@bash $(SCRIPT_DIR)scripts/build/build-system.sh
 
 auto:
-	@echo "🔨 Building PanOS automatically..."
-	@bash $(SCRIPT_DIR)build-PanOS-os.sh --auto
+	@bash $(SCRIPT_DIR)panos.sh --auto
 
-quick: auto
-	@echo "✅ Build completed"
+run qemu:
+	@bash $(SCRIPT_DIR)scripts/run/run-qemu.sh
 
-menu:
-	@echo "📋 Opening interactive menu..."
-	@bash $(SCRIPT_DIR)build-PanOS-os.sh
+iso:
+	@bash $(SCRIPT_DIR)scripts/iso/create-iso.sh
 
 deps:
-	@echo "✅ Checking dependencies..."
-	@bash $(SCRIPT_DIR)build-PanOS-os.sh
-	@read -p "Press Enter..."
+	@bash $(SCRIPT_DIR)scripts/build/install-deps.sh
 
-qemu:
-	@if [ -f ~/pan-os/build/vmlinuz ] && [ -f ~/pan-os/build/initramfs.cpio ]; then \
-		echo "🚀 Running PanOS in QEMU..."; \
-		qemu-system-x86_64 \
-			-kernel ~/pan-os/build/vmlinuz \
-			-initrd ~/pan-os/build/initramfs.cpio \
-			-nographic \
-			-append "console=ttyS0" \
-			-m 512 \
-			-smp 2; \
-	else \
-		echo "❌ Image not found. Run 'make auto' first."; \
-	fi
+check:
+	@bash $(SCRIPT_DIR)scripts/utils/check-build.sh
 
-run: qemu
+docker:
+	@cd $(SCRIPT_DIR) && docker compose up --build
+
+arm64:
+	@bash $(SCRIPT_DIR)scripts/build/build-arm64.sh
 
 clean:
-	@echo "🗑️  Cleaning ~/pan-os..."
-	@rm -rf ~/pan-os
-	@echo "✅ Cleanup completed"
+	@echo "Cleaning ~/pan-os-iso..."
+	@rm -rf ~/pan-os-iso
+	@echo "Done."
 
 rebuild: clean auto
-	@echo "✅ Rebuild completed"
+
+menu:
+	@bash $(SCRIPT_DIR)panos.sh
 
 .DEFAULT_GOAL := help
